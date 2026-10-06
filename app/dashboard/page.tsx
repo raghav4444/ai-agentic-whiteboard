@@ -1,6 +1,5 @@
 import ProjectList from '@/components/custom/dashboard/ProjectList'
 import WelcomeBanner from '@/components/custom/dashboard/WelcomeBanner'
-import React from 'react'
 
 const isClerkConfigured =
   !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
