@@ -20,8 +20,10 @@ function DashboardPage() {
 
   return (
     <div>
-      <WelcomeBanner/>
-      <ProjectList />
+      <WelcomeBanner />
+      <section aria-label="Your boards">
+        <ProjectList />
+      </section>
     </div>
   )
 }
