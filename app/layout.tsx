@@ -10,7 +10,7 @@ const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Whizboard",
-  description: "AI whiteboard workspace",
+  description: "An AI-powered whiteboard workspace for turning ideas into action.",
 };
 
 const isClerkConfigured =
