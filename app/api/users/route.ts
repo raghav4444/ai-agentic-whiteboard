@@ -16,31 +16,37 @@ export async function POST(req: NextRequest){
         return NextResponse.json({ message: "Database not configured" }, { status: 503 });
     }
 
-    const user = await currentUser()
+    try {
+        const user = await currentUser()
 
-    // If user exist?
-    if (user) {
-        const clerkEmail = user.primaryEmailAddress?.emailAddress;
+        if (user) {
+            const clerkEmail = user.primaryEmailAddress?.emailAddress;
 
-        if (!clerkEmail) {
-            return NextResponse.json({ message: "User email not found" }, { status: 400 });
-        }
+            if (!clerkEmail) {
+                return NextResponse.json({ message: "User email not found" }, { status: 400 });
+            }
 
-        const userData = await db.select().from(users)
-            .where(eq(users.email, clerkEmail));
+            const userData = await db.select().from(users)
+                .where(eq(users.email, clerkEmail));
 
-        if (userData?.length > 0) {
-            return NextResponse.json(userData[0]);
-        } else {
+            if (userData?.length > 0) {
+                return NextResponse.json(userData[0]);
+            }
+
             const result = await db.insert(users).values({
-                name: user?.fullName,
-                email: user?.primaryEmailAddress?.emailAddress ?? '',
+                name: user.fullName,
+                email: clerkEmail,
             }).returning();
-
 
             return NextResponse.json(result[0]);
         }
-    }
 
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
+        return NextResponse.json({ message: "User not found" }, { status: 404 });
+    } catch (error) {
+        console.error('Failed to create or fetch current user', error);
+        return NextResponse.json(
+            { message: "Database unavailable. Run the database migration and try again." },
+            { status: 503 },
+        );
+    }
 }
