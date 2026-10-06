@@ -11,7 +11,7 @@ function Workspace() {
   return (
     <div>
         <WorkspaceHeader selectedTab={(value:string) => setActiveTab(value)} />
-          {activeTab == "whiteboard" ? <Whiteboard/>:<SmartDoc/> }
+          {activeTab === "whiteboard" ? <Whiteboard/>:<SmartDoc/> }
     </div>
   )
 }
