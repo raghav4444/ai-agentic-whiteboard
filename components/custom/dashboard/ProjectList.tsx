@@ -1,6 +1,4 @@
 "use client"
-import { Button } from '@/components/ui/button';
-import { Folder } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react'
 import CreateNewBoardDialog from './CreateNewBoardDialog';
