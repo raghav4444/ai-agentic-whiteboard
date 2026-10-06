@@ -8,10 +8,12 @@ import CreateNewBoardDialog from './CreateNewBoardDialog';
 function WelcomeBanner() {
 
   const {user} = useUser();
+  const displayName = user?.firstName || user?.fullName || 'Creator';
+
   return (
     <div>
         <div className="p-10 border rounded-xl bg-linear-to-r from-blue-200 to-purple-200">
-            <h2 className='text-2xl font-bold'>Welcome, {user?.fullName}</h2>
+            <h2 className='text-2xl font-bold'>Welcome, {displayName}</h2>
             <p>Bring your ideas to life with infinite canvas</p>
 
             <div className='mt-4 flex items-center gap-2'>
