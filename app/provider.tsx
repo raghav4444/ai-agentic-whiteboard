@@ -4,8 +4,7 @@ import axios from 'axios'
 import { UserDetailContext } from '@/context/UserDetailContext';
 
 const isClerkConfigured =
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-  !!process.env.CLERK_SECRET_KEY;
+  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 function Provider({ children }:{ children: React.ReactNode}) {
 
@@ -24,7 +23,7 @@ function Provider({ children }:{ children: React.ReactNode}) {
         const result = await axios.post('/api/users');
         setUserDetail(result.data);
       } catch (error) {
-        console.error('Failed to create or fetch current user', error);
+        setUserDetail(null);
       }
     }
   return (
