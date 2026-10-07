@@ -16,7 +16,7 @@ const baloo2 = Baloo_2({
 
 export const metadata: Metadata = {
   title: "ScribeBoard | AI Agentic Whiteboard",
-  description: "Generate system architectures, flowcharts, and technical wireframes with Groq AI on an infinite whiteboard canvas.",
+  description: "Generate system architectures, flowcharts, and technical wireframes with Gemini AI on an infinite whiteboard canvas.",
 };
 
 const isClerkConfigured =
