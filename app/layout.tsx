@@ -1,5 +1,4 @@
 import { ClerkProvider } from '@clerk/nextjs';
-import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 import type { Metadata } from "next";
 import Provider from './provider';
