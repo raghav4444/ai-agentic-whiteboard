@@ -1,33 +1,44 @@
 "use client"
-import { UserDetailContext } from '@/context/UserDetailContext';
+
+import React, { useContext, useEffect, useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import axios from 'axios'
-import React, { useEffect, useState } from 'react'
+import { UserDetailContext } from '@/context/UserDetailContext'
 
-function Provider({ children }: { children: React.ReactNode }) {
-    const [userDetail, setUserDetail] = useState<any>();
+function Provider({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
 
-    useEffect(() => {
-        const fetchOrCreateUser = async () => {
-            try {
-                const result = await axios.get('/api/users');
-                setUserDetail(result.data);
-            } catch (e) {
-                try {
-                    const postResult = await axios.post('/api/users');
-                    setUserDetail(postResult.data);
-                } catch (err) {
-                }
-            }
-        };
+  const { user } = useUser();
+  const [userDetail, setUserDetail] = useState<any>();
+  useEffect(() => {
+    user && CreateNewUser();
+  }, [user])
 
-        fetchOrCreateUser();
-    }, []);
+  const CreateNewUser = async () => {
+    try {
+      const result = await axios.post('/api/users', {})
+      console.log(result.data);
+      setUserDetail(result.data?.user);
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      // Try to get existing user if creation failed
+      try {
+        const result = await axios.get('/api/users');
+        setUserDetail(result.data?.user);
+      } catch (getError) {
+        console.error("Error fetching user:", getError);
+      }
+    }
+  }
 
-    return (
-        <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
-            <div>{children}</div>
-        </UserDetailContext.Provider>
-    )
+  return (
+    <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+      <div>{children}</div>
+    </UserDetailContext.Provider>
+  )
 }
 
 export default Provider
