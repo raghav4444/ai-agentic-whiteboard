@@ -9,8 +9,8 @@ import { Toaster } from '@/components/ui/toast';
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Whizboard",
-  description: "An AI-powered whiteboard workspace for turning ideas into action.",
+  title: "ScribeBoard | AI Agentic Whiteboard",
+  description: "Generate system architectures, flowcharts, and technical wireframes with Groq AI on an infinite whiteboard canvas.",
 };
 
 const isClerkConfigured =
