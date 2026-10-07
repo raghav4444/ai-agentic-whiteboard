@@ -1,39 +1,33 @@
 "use client"
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
 import { UserDetailContext } from '@/context/UserDetailContext';
+import axios from 'axios'
+import React, { useEffect, useState } from 'react'
 
-const isClerkConfigured =
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-function Provider({ children }:{ children: React.ReactNode}) {
-
-    const [userDetail, setUserDetail] = useState<any>(null);
+function Provider({ children }: { children: React.ReactNode }) {
+    const [userDetail, setUserDetail] = useState<any>();
 
     useEffect(() => {
-      if (!isClerkConfigured) {
-        return;
-      }
+        const fetchOrCreateUser = async () => {
+            try {
+                const result = await axios.get('/api/users');
+                setUserDetail(result.data);
+            } catch (e) {
+                try {
+                    const postResult = await axios.post('/api/users');
+                    setUserDetail(postResult.data);
+                } catch (err) {
+                }
+            }
+        };
 
-      void CreateNewUser();
+        fetchOrCreateUser();
     }, []);
 
-    const CreateNewUser = async () => {
-      try {
-        const result = await axios.post('/api/users');
-        setUserDetail(result.data);
-      } catch (error) {
-        setUserDetail(null);
-      }
-    }
-  return (
-    <UserDetailContext.Provider value={{userDetail, setUserDetail}}>
-
-      <div>{ children }</div>
-
-    </UserDetailContext.Provider>
-    
-  )
+    return (
+        <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+            <div>{children}</div>
+        </UserDetailContext.Provider>
+    )
 }
 
 export default Provider
