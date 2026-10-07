@@ -32,7 +32,7 @@ ScribeBoard is a next-generation collaborative visual whiteboard and architectur
 - **Framework**: Next.js 16 (App Router)
 - **Frontend UI**: React 19, Tailwind CSS v4, Base UI, Lucide Icons
 - **Canvas Engine**: `@excalidraw/excalidraw`
-- **AI Inference**: Groq API (`openai/gpt-oss-120b`, `groq/compound-mini`, `qwen/qwen3.8-27b`)
+- **AI Inference**: Google Gemini API (`gemini-2.0-flash`)
 - **Database & ORM**: Neon Serverless PostgreSQL & Drizzle ORM
 - **Authentication**: Clerk (`@clerk/nextjs`)
 - **Language**: TypeScript
@@ -47,7 +47,7 @@ ScribeBoard is a next-generation collaborative visual whiteboard and architectur
 - npm or pnpm
 - A Neon PostgreSQL account (or compatible PostgreSQL database)
 - A Clerk account for authentication
-- A Groq Cloud API key
+- A Google Gemini API key
 
 ### 1. Clone & Install Dependencies
 
@@ -81,8 +81,8 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
 
-# Groq Cloud API Key
-GROQ_API_KEY=gsk_...
+# Google Gemini API Key
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ### 3. Initialize Database Schema
