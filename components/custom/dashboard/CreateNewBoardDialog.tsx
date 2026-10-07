@@ -1,92 +1,117 @@
+"use client"
+
 import React, { useState } from 'react'
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+    DialogFooter
 } from "@/components/ui/dialog"
 import { Button } from '@/components/ui/button'
-import { Loader2, Plus } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
 
+interface Props {
+    onBoardCreated?: () => void;
+}
 
-function CreateNewBoardDialog() {
+function CreateNewBoardDialog({ onBoardCreated }: Props) {
+    const [workspaceName, setWorkspaceName] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [dialog, setDialog] = useState(false);
+    const router = useRouter();
 
-  const [workspaceName, setWorkspaceName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [dialog, setDialog] = useState(false);
-  const route = useRouter();
-  const projectId = crypto.randomUUID();
+    const handleCreateBoard = async () => {
+        if (workspaceName.trim() === "" || workspaceName.length > 50) {
+            toast.add({
+                type: 'error',
+                title: 'Invalid Workspace Name',
+                description: 'Please enter a valid workspace name (1-50 characters)'
+            })
+            return;
+        }
 
-  const handleCreateBoard= async ()=>{
-    if (workspaceName.trim() === ""  || workspaceName?.length > 30){
-
-        toast.add({
-            type:"error",
-            title: "Invalid Workspace Name",
-            description: "Please enter a valid workspace name (1-30 characters)."
-        })
-
-        return;
-    }
         setLoading(true);
         try {
-            const result = await axios.post('/api/projects',{
-                projectName: workspaceName,
-                projectId: projectId 
-            })
+            const projectId = crypto.randomUUID();
+            await axios.post("/api/projects", {
+                projectName: workspaceName.trim(),
+                projectId: projectId,
+            });
 
-            console.log(result?.data);
             toast.add({
-                type:'success',
-                title:'New Workspace Created'
-            })
+                type: 'success',
+                title: 'New Workspace Created',
+            });
+
             setDialog(false);
-            route.push('/workspace/' + projectId)
-        } catch {
+            setWorkspaceName("");
+            if (onBoardCreated) {
+                onBoardCreated();
+            }
+            router.push(`/workspace/${projectId}`);
+        } catch (error) {
+            console.error(error);
             toast.add({
-                type:'error',
-                title:'Workspace Creation Failed',
-                description:'Unable to create the workspace. Please try again.'
-            })
+                type: 'error',
+                title: 'Creation Failed',
+                description: 'Could not create workspace. Please check database configuration.'
+            });
         } finally {
             setLoading(false);
         }
-  }
+    }
 
-  return (
+    return (
         <Dialog open={dialog} onOpenChange={setDialog}>
-        <DialogTrigger render={<Button className="w-full" />}>
-                <Plus />Create New Board
-        </DialogTrigger>
-        <DialogContent>
-            <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Whiteboard Workspace Title</DialogTitle>
-            </DialogHeader>
-            <div>
-                <label>Enter Workspace Name</label>
-                <Input placeholder='Workspace Name' className='mt-1'
-                onChange={(e) => setWorkspaceName(e.target.value)} />
-            </div>
-              <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button
-            disabled={workspaceName?.length == 0 || loading} 
-            onClick={handleCreateBoard}>
-            {loading&&<Loader2 className='animate-spin'/>}Create
-            </Button>
-        </DialogFooter>
-        </DialogContent>
-      
+            <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm">
+                    <Plus size={16} /> Create New Board
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="text-base font-bold">New Whiteboard Workspace</DialogTitle>
+                </DialogHeader>
+                <div className="py-2">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                        Workspace Name
+                    </label>
+                    <Input
+                        placeholder="e.g. E-Commerce Microservices Architecture"
+                        className="mt-1.5 text-xs"
+                        value={workspaceName}
+                        onChange={(e) => setWorkspaceName(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleCreateBoard();
+                            }
+                        }}
+                    />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline" size="sm">Cancel</Button>
+                    </DialogClose>
+                    <Button
+                        size="sm"
+                        disabled={workspaceName.trim() === "" || loading}
+                        onClick={handleCreateBoard}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer gap-1.5"
+                    >
+                        {loading && <Loader2 size={14} className="animate-spin" />}
+                        Create Workspace
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
         </Dialog>
-  )
+    )
 }
 
-export default CreateNewBoardDialog;
+export default CreateNewBoardDialog

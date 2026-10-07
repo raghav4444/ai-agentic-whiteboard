@@ -1,28 +1,13 @@
-import ProjectList from '@/components/custom/dashboard/ProjectList'
+import { UserButton } from '@clerk/nextjs'
+import React from 'react'
 import WelcomeBanner from '@/components/custom/dashboard/WelcomeBanner'
-
-const isClerkConfigured =
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-  !!process.env.CLERK_SECRET_KEY;
-
+import ProjectList from '@/components/custom/dashboard/ProjectList'
 function DashboardPage() {
-  if (!isClerkConfigured) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 p-8 text-slate-200">
-        <h1 className="text-2xl font-semibold">Dashboard unavailable</h1>
-        <p className="mt-2 text-slate-400">
-          Add your Clerk keys and database env variables to enable the whiteboard dashboard.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <WelcomeBanner />
-      <section aria-label="Your boards">
-        <ProjectList />
-      </section>
+      <WelcomeBanner/>
+      <ProjectList/>
+      
     </div>
   )
 }
