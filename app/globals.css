@@ -1,3 +1,4 @@
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -90,86 +91,223 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* =========================
+   LIGHT THEME
+   ========================= */
+
 :root {
-  --card: oklch(1 0.006 260);
-  --card-foreground: oklch(0.16 0.035 265);
-  --popover: oklch(1 0.006 260);
-  --popover-foreground: oklch(0.16 0.035 265);
-  --primary: oklch(0.59 0.24 265);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0.014 260);
-  --secondary-foreground: oklch(0.22 0.045 265);
-  --muted: oklch(0.965 0.012 260);
-  --muted-foreground: oklch(0.48 0.045 260);
-  --accent: oklch(0.95 0.035 265);
-  --accent-foreground: oklch(0.25 0.1 265);
-  --destructive: oklch(0.62 0.22 25);
-  --border: oklch(0.88 0.035 255);
-  --input: oklch(0.88 0.035 255);
-  --ring: oklch(0.59 0.24 265);
-  --chart-1: oklch(0.59 0.24 265);
-  --chart-2: oklch(0.72 0.17 180);
-  --chart-3: oklch(0.78 0.17 85);
-  --chart-4: oklch(0.68 0.2 330);
-  --chart-5: oklch(0.7 0.16 145);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0.008 260);
-    --sidebar-foreground: oklch(0.16 0.035 265);
-    --sidebar-primary: oklch(0.59 0.24 265);
-    --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.95 0.035 265);
-    --sidebar-accent-foreground: oklch(0.25 0.1 265);
-    --sidebar-border: oklch(0.88 0.035 255);
-    --sidebar-ring: oklch(0.59 0.24 265);
-    --background: oklch(0.99 0.006 260);
-    --foreground: oklch(0.16 0.035 265);
+  /* Main background */
+  --background: #fcfcfd;
+  --foreground: #111827;
+
+  /* Cards */
+  --card: #ffffff;
+  --card-foreground: #111827;
+
+  /* Popovers / dropdowns */
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+
+  /* Primary Whizboard Blue */
+  --primary: #2f6bff;
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: #f6f7fb;
+  --secondary-foreground: #111827;
+
+  /* Muted */
+  --muted: #f5f7fb;
+  --muted-foreground: #667085;
+
+  /* Active / selected state */
+  --accent: #eef4ff;
+  --accent-foreground: #2f6bff;
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Custom colors */
+  --purple: #8b5cf6;
+  --success: #34a853;
+  --warning: #f59e0b;
+  --info: #2f6bff;
+
+  /* Borders */
+  --border: #e8eaf0;
+  --input: #e8eaf0;
+  --ring: #2f6bff;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Charts */
+  --chart-1: #2f6bff;
+  --chart-2: #8b5cf6;
+  --chart-3: #34a853;
+  --chart-4: #f59e0b;
+  --chart-5: #fbbf24;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+
+  --sidebar-primary: #2f6bff;
+  --sidebar-primary-foreground: #ffffff;
+
+  /* Active sidebar item */
+  --sidebar-accent: #eef4ff;
+  --sidebar-accent-foreground: #2f6bff;
+
+  --sidebar-border: #e8eaf0;
+  --sidebar-ring: #2f6bff;
 }
 
+/* =========================
+   DARK THEME
+   ========================= */
+
 .dark {
-    --background: oklch(0.16 0.035 265);
-    --foreground: oklch(0.985 0.008 260);
-    --card: oklch(0.21 0.04 265);
-    --card-foreground: oklch(0.985 0.008 260);
-    --popover: oklch(0.21 0.04 265);
-    --popover-foreground: oklch(0.985 0.008 260);
-    --primary: oklch(0.68 0.2 265);
-    --primary-foreground: oklch(0.16 0.035 265);
-    --secondary: oklch(0.27 0.045 265);
-    --secondary-foreground: oklch(0.985 0.008 260);
-    --muted: oklch(0.27 0.045 265);
-    --muted-foreground: oklch(0.75 0.035 260);
-    --accent: oklch(0.3 0.08 265);
-    --accent-foreground: oklch(0.985 0.008 260);
-    --destructive: oklch(0.7 0.19 25);
-    --border: oklch(1 0.01 260 / 14%);
-    --input: oklch(1 0.01 260 / 18%);
-    --ring: oklch(0.68 0.2 265);
-    --chart-1: oklch(0.68 0.2 265);
-    --chart-2: oklch(0.72 0.17 180);
-    --chart-3: oklch(0.78 0.17 85);
-    --chart-4: oklch(0.68 0.2 330);
-    --chart-5: oklch(0.7 0.16 145);
-    --sidebar: oklch(0.19 0.04 265);
-    --sidebar-foreground: oklch(0.985 0.008 260);
-    --sidebar-primary: oklch(0.68 0.2 265);
-    --sidebar-primary-foreground: oklch(0.16 0.035 265);
-    --sidebar-accent: oklch(0.3 0.08 265);
-    --sidebar-accent-foreground: oklch(0.985 0.008 260);
-    --sidebar-border: oklch(1 0.01 260 / 14%);
-    --sidebar-ring: oklch(0.68 0.2 265);
+  --background: #0b1020;
+  --foreground: #f8fafc;
+
+  --card: #111827;
+  --card-foreground: #f8fafc;
+
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+
+  --primary: #5b83ff;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1a2235;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1a2235;
+  --muted-foreground: #98a2b3;
+
+  --accent: #172554;
+  --accent-foreground: #8eabff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --purple: #a78bfa;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --info: #60a5fa;
+
+  --border: #263044;
+  --input: #263044;
+  --ring: #5b83ff;
+
+  --chart-1: #5b83ff;
+  --chart-2: #a78bfa;
+  --chart-3: #4ade80;
+  --chart-4: #fb923c;
+  --chart-5: #facc15;
+
+  --sidebar: #111827;
+  --sidebar-foreground: #f8fafc;
+
+  --sidebar-primary: #5b83ff;
+  --sidebar-primary-foreground: #ffffff;
+
+  --sidebar-accent: #172554;
+  --sidebar-accent-foreground: #8eabff;
+
+  --sidebar-border: #263044;
+  --sidebar-ring: #5b83ff;
 }
+
+/* =========================
+   BASE
+   ========================= */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans), "Inter", sans-serif;
-    font-feature-settings: "cv11", "ss01";
-    letter-spacing: -0.01em;
-    }
+  }
+
   html {
     @apply font-sans;
-    }
+  }
 }
+
+/* =========================
+   WHIZBOARD UTILITIES
+   ========================= */
+
+@layer utilities {
+  /* Main button */
+  .bg-brand-gradient {
+    background: linear-gradient(
+      90deg,
+      #2f6bff 0%,
+      #8b5cf6 100%
+    );
+  }
+
+  /* Main button hover */
+  .bg-brand-gradient-hover {
+    background: linear-gradient(
+      90deg,
+      #2457e6 0%,
+      #7c3aed 100%
+    );
+  }
+
+  /* Dashboard hero */
+  .bg-hero-gradient {
+    background: linear-gradient(
+      110deg,
+      #eef5ff 0%,
+      #f5f7ff 45%,
+      #f8f0ff 100%
+    );
+  }
+
+  /* AI cards */
+  .bg-ai-soft {
+    background: #f3efff;
+  }
+
+  /* Green cards */
+  .bg-success-soft {
+    background: #eaf8ec;
+  }
+
+  /* Orange cards */
+  .bg-warning-soft {
+    background: #fff4df;
+  }
+
+  /* Blue cards */
+  .bg-info-soft {
+    background: #eef4ff;
+  }
+
+  /* Light pink */
+  .bg-pink-soft {
+    background: #feeff6;
+  }
+
+  /* Card shadow */
+  .shadow-whizboard {
+    box-shadow:
+      0 1px 2px rgb(16 24 40 / 0.03),
+      0 4px 12px rgb(16 24 40 / 0.05);
+  }
+
+  .shadow-whizboard-hover {
+    box-shadow:
+      0 4px 8px rgb(16 24 40 / 0.05),
+      0 12px 28px rgb(16 24 40 / 0.08);
+  }
+}
+
