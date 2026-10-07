@@ -1,12 +1,16 @@
-import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 import type { Metadata } from "next";
 import Provider from './provider';
-import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { Baloo_2 } from "next/font/google";
 import { Toaster } from '@/components/ui/toast';
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const baloo2 = Baloo_2({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "ScribeBoard | AI Agentic Whiteboard",
@@ -14,29 +18,32 @@ export const metadata: Metadata = {
 };
 
 const isClerkConfigured =
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+  !!process.env.CLERK_SECRET_KEY;
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const wrappedChildren = (
-    <Provider>
-      {children}
-    </Provider>
-  );
+  if (!isClerkConfigured) {
+    return (
+      <html lang="en" className={cn("font-sans", baloo2.variable)}>
+        <body style={{ margin: 0, padding: 0 }}>
+          {children}
+        </body>
+      </html>
+    );
+  }
 
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", inter.variable)}>
-      <body style={{ margin: 0, padding: 0 }}>
-        {isClerkConfigured ? (
-          <ClerkProvider>{wrappedChildren}</ClerkProvider>
-        ) : (
-          wrappedChildren
-        )}
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={cn("font-sans", baloo2.variable)}>
+        <body style={{ margin: 0, padding: 0 }}>
+          <Provider>{children}</Provider>
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
