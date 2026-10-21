@@ -134,8 +134,10 @@ function WindowBar({ title, children, icon }: { title: string; children?: ReactN
 }
 
 /**
- * A small diagram node, drawn as a miniature window so it belongs to the same
- * family as the big canvas card.
+ * A small diagram node. Drawn as a card so it belongs to the same family as
+ * the big canvas, but deliberately without window chrome — the traffic lights
+ * belong to the framed panels, and repeating them at this size just adds
+ * noise.
  */
 function NodeCard({
   title,
@@ -149,12 +151,7 @@ function NodeCard({
   className?: string;
 }) {
   return (
-    <div className={`capx-spring flex flex-col items-center gap-1 rounded-2xl border bg-white p-2.5 shadow-sm ${tone} ${className}`}>
-      <span className="flex items-center gap-0.5" aria-hidden="true">
-        <i className="size-1 rounded-full bg-red-300" />
-        <i className="size-1 rounded-full bg-amber-300" />
-        <i className="size-1 rounded-full bg-emerald-300" />
-      </span>
+    <div className={`capx-spring flex flex-col items-center gap-1.5 rounded-2xl border bg-white p-2.5 shadow-sm ${tone} ${className}`}>
       <Icon size={16} />
       <span className="text-[10px] font-bold text-[var(--ink)]">{title}</span>
     </div>
@@ -1025,16 +1022,11 @@ function CopilotStage() {
             <NodeCard title="Web App" Icon={Globe} tone="border-blue-200 text-blue-600" className="w-16" />
 
             <div
-              className={`capx-spring capx-injected relative flex w-20 flex-col items-center gap-1 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
+              className={`capx-spring capx-injected relative flex w-20 flex-col items-center gap-1.5 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
                 injected ? 'is-in' : ''
               } ${flash ? 'is-flash' : ''}`}
             >
               <span className="absolute -top-2 rounded-full bg-purple-600 px-1 py-0.5 text-[8px] font-bold text-white">AI INJECTED</span>
-              <span className="flex items-center gap-0.5" aria-hidden="true">
-                <i className="size-1 rounded-full bg-red-300" />
-                <i className="size-1 rounded-full bg-amber-300" />
-                <i className="size-1 rounded-full bg-emerald-300" />
-              </span>
               <Lock size={16} className="text-purple-600" />
               <span className="text-center text-[9.5px] font-bold leading-tight text-purple-950">Auth Service</span>
             </div>
