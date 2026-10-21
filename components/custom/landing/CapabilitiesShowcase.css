@@ -103,6 +103,23 @@
 }
 .capx-spring:active { cursor: grabbing; }
 
+/* Diagram nodes lift away from the board when the pointer lands on them.
+ * A short spring rather than a plain ease, so the node overshoots slightly
+ * and settles — the same feel as the canvas grabbing a shape. */
+.capx-node {
+  transition:
+    transform 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 420ms ease;
+  will-change: transform;
+}
+.capx-node:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 20px 32px -18px rgb(15 23 42 / 0.45);
+}
+.capx-node:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
 /* Typography helpers.
  * The landing page sets its headings in the display serif and marks the accent
  * phrase with an italic `em`; the annotations use the same serif. Mono is the

@@ -264,7 +264,7 @@ function HeroStage() {
                 rather than being pinned to the canvas, so it stays aligned
                 with the API node however the row reflows. */}
             <div className="absolute left-1/2 top-[78px] h-9 w-0.5 -translate-x-1/2 bg-neutral-300" aria-hidden="true" />
-            <div className="capx-spring absolute left-1/2 top-[118px] flex w-24 -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-amber-200 bg-white p-3 shadow-md">
+            <div className="capx-node capx-spring absolute left-1/2 top-[118px] flex w-24 -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-amber-200 bg-white p-3 shadow-md">
               <span className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                 <Layers size={20} />
               </span>
@@ -1074,12 +1074,13 @@ function CopilotStage() {
                   <path d="M 252 94 V 146" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrowGreen)" />
                 </svg>
 
-                <div className="absolute left-0 top-[30px] h-[64px] w-[88px]">
+                <div className="capx-node absolute left-0 top-[30px] h-[64px] w-[88px]">
                   <NodeCard title="Web App" Icon={Globe} tone="border-blue-200 text-blue-600" className="h-full w-full" />
                 </div>
 
+                <div className="capx-node absolute left-[102px] top-[30px] h-[64px] w-[92px]">
                 <div
-                  className={`capx-spring capx-injected absolute left-[102px] top-[30px] h-[64px] w-[92px] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
+                  className={`capx-spring capx-injected relative flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
                     injected ? 'is-in' : ''
                   } ${flash ? 'is-flash' : ''}`}
                 >
@@ -1087,16 +1088,17 @@ function CopilotStage() {
                   <Lock size={16} className="text-purple-600" />
                   <span className="text-center text-[9.5px] font-bold leading-tight text-purple-950">Auth Service</span>
                 </div>
+                </div>
 
-                <div className="absolute left-[208px] top-[30px] h-[64px] w-[88px]">
+                <div className="capx-node absolute left-[208px] top-[30px] h-[64px] w-[88px]">
                   <NodeCard title="API" Icon={Network} tone="border-emerald-200 text-[var(--heading-accent)]" className="h-full w-full" />
                 </div>
 
-                <div className="absolute left-[310px] top-[30px] h-[64px] w-[90px]">
+                <div className="capx-node absolute left-[310px] top-[30px] h-[64px] w-[90px]">
                   <NodeCard title="AI Service" Icon={Box} tone="border-purple-200 text-purple-600" className="h-full w-full" />
                 </div>
 
-                <div className="absolute left-[197px] top-[150px] h-[46px] w-[110px]">
+                <div className="capx-node absolute left-[197px] top-[150px] h-[46px] w-[110px]">
                   <NodeCard title="Database" Icon={Layers} tone="border-amber-200 text-amber-600" className="h-full w-full" />
                 </div>
               </div>
@@ -1289,13 +1291,13 @@ function MultiplayerStage() {
                   <line x1="258" y1="52" x2="288" y2="52" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxCollabArrow)" />
                 </svg>
 
-                <div className="absolute left-0 top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
+                <div className="capx-node absolute left-0 top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
                   <span className="text-xs font-bold text-blue-700">Frontend</span>
                 </div>
-                <div className="absolute left-[142px] top-[26px] flex h-[52px] w-[116px] flex-col items-center justify-center rounded-xl border border-emerald-300 bg-white p-2.5 shadow-sm">
+                <div className="capx-node absolute left-[142px] top-[26px] flex h-[52px] w-[116px] flex-col items-center justify-center rounded-xl border border-emerald-300 bg-white p-2.5 shadow-sm">
                   <span className="text-xs font-bold text-emerald-700">API</span>
                 </div>
-                <div className="absolute left-[288px] top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-purple-300 bg-white p-2.5 shadow-sm">
+                <div className="capx-node absolute left-[288px] top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-purple-300 bg-white p-2.5 shadow-sm">
                   <span className="text-xs font-bold text-purple-700">AI Service</span>
                 </div>
               </div>
@@ -1608,7 +1610,7 @@ export default function CapabilitiesShowcase() {
 
       <div className="relative mx-auto flex w-full max-w-[1260px] flex-col gap-28 px-6 pt-10 pb-20">
         {/* ---- Hero ---- */}
-        <section id="hero" className="capx-reveal relative flex flex-col items-center justify-between gap-12 pt-6 pb-6 lg:flex-row">
+        <section id="hero" className="capx-reveal relative flex flex-col items-center justify-between gap-12 pt-14 pb-6 lg:flex-row">
           <div className="flex w-full flex-col items-start gap-6 lg:w-[45%]">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-ink)]">
               <span className="size-[7px] rounded-full bg-[var(--signal)]" />
