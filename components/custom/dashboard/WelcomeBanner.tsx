@@ -2,7 +2,7 @@
 import { useUser } from '@clerk/nextjs';
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowRight, Wand2 } from 'lucide-react';
+import { Sparkles, ArrowRight, Wand2 } from '@/lib/icons';
 import CreateNewBoardDialog from './CreateNewBoardDialog';
 import {
     Dialog,

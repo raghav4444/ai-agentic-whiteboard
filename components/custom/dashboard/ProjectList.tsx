@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Folder, Search, MoreVertical, Trash2, Edit3, ExternalLink, Calendar, Plus, Loader2 } from 'lucide-react'
+import { Folder, Search, MoreVertical, Trash2, Edit3, ExternalLink, Calendar, Plus, Loader2 } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Image from 'next/image'

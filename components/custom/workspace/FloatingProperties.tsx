@@ -25,7 +25,7 @@ import {
   Type,
   Unlock,
   X,
-} from "lucide-react"
+} from "@/lib/icons"
 import {
   Popover,
   PopoverContent,
