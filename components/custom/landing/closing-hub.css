@@ -1,0 +1,291 @@
+/* ClosingHub — the closing block of the capabilities page.
+ *
+ * The hub is drawn in a 520x400 coordinate space: the SVG connectors and the
+ * HTML cards share it, so the curves always land on the cards. The container
+ * keeps that aspect ratio, which also means the connector strokes never
+ * distort.
+ */
+
+.closing-hub {
+  position: relative;
+  padding: 40px 0 20px;
+}
+
+.closing-hub__grid {
+  display: grid;
+  gap: 56px;
+  align-items: center;
+  width: min(100% - 48px, 1240px);
+  margin-inline: auto;
+}
+
+@media (min-width: 992px) {
+  .closing-hub__grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 72px; }
+}
+
+/* ---- Copy column ---- */
+
+.closing-hub__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgb(167 243 208 / 0.85);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #f0fdf4;
+  color: var(--heading-accent, #065f46);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.closing-hub__eyebrow > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal, #25a266);
+}
+
+.closing-hub h2 {
+  margin: 22px 0 0;
+  color: var(--ink);
+  font-size: clamp(38px, 4.2vw, 58px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+.closing-hub h2 em {
+  color: var(--heading-accent, #065f46);
+  font-family: var(--font-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.closing-hub__body {
+  max-width: 420px;
+  margin: 22px 0 0;
+  color: var(--muted-ink);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.closing-hub__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.closing-hub__trust {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+  color: var(--muted-ink);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.closing-hub__avatars { display: flex; padding-left: 8px; }
+.closing-hub__avatars > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-left: -8px;
+  place-items: center;
+  border: 2px solid var(--landing-background, #faf9f6);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* ---- The hub ---- */
+
+.closing-hub__visual { position: relative; }
+
+.chub-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 520 / 400;
+}
+
+/* The soft green wash the whole hub sits in. */
+.chub-wash {
+  position: absolute;
+  inset: -6% -2% -10% -4%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 45%, rgb(209 250 229 / 0.55), transparent 62%),
+    radial-gradient(circle at 78% 22%, rgb(219 234 254 / 0.42), transparent 58%),
+    radial-gradient(circle at 20% 78%, rgb(254 243 199 / 0.4), transparent 58%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+/* Connectors from the hub out to each pillar. */
+.chub-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.chub-link {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.chub-link--purple { stroke: #c4b5fd; }
+.chub-link--green { stroke: #86efac; }
+.chub-link--amber { stroke: #fcd34d; }
+.chub-link--blue { stroke: #93c5fd; }
+.chub-link--dashed {
+  stroke: #a7f3d0;
+  stroke-dasharray: 5 6;
+  stroke-width: 1.4;
+}
+
+/* The hub itself. */
+.chub-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 12px 20px;
+  background: #fff;
+  box-shadow: 0 18px 40px -20px rgb(6 95 70 / 0.35);
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.chub-hub__mark {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+}
+
+/* The four pillars. */
+.chub-slot { position: absolute; z-index: 4; }
+.chub-slot--tl { top: 4%; left: 2%; }
+.chub-slot--tr { top: 4%; right: 0; }
+.chub-slot--bl { bottom: 16%; left: 4%; }
+.chub-slot--br { right: -1%; bottom: 10%; }
+
+.chub-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid;
+  border-radius: 16px;
+  padding: 12px 15px;
+  background: #fff;
+  box-shadow: 0 14px 30px -20px rgb(15 23 42 / 0.4);
+}
+.chub-card__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+}
+.chub-card__text { display: flex; flex-direction: column; gap: 2px; }
+.chub-card__text strong { font-size: 13px; letter-spacing: -0.02em; }
+.chub-card__text small { color: var(--muted-ink); font-size: 10px; }
+
+.chub-card--purple { border-color: #e2d5f7; }
+.chub-card--purple .chub-icon--purple { background: #ede4fb; color: #8b5cf6; }
+.chub-card--purple .chub-title--purple { color: #7c3aed; }
+
+.chub-card--green { border-color: #cfeedd; }
+.chub-card--green .chub-icon--green { background: #dcf5e7; color: #16a34a; }
+.chub-card--green .chub-title--green { color: #15803d; }
+
+.chub-card--amber { border-color: #f7e5b4; }
+.chub-card--amber .chub-icon--amber { background: #fef3cd; color: #f59e0b; }
+.chub-card--amber .chub-title--amber { color: #b45309; }
+
+.chub-card--blue { border-color: #d3e6fd; }
+.chub-card--blue .chub-icon--blue { background: #dbeafe; color: #3b82f6; }
+.chub-card--blue .chub-title--blue { color: #2563eb; }
+
+/* Collaborators, present on the board. */
+.chub-cursor {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+}
+.chub-cursor--one { top: 0; left: 26%; }
+.chub-cursor--two { top: 2%; right: 18%; }
+.chub-cursor--three { top: 44%; right: 0; }
+.chub-cursor--four { bottom: 4%; left: 38%; }
+
+.chub-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: 0 6px 14px -8px rgb(15 23 42 / 0.5);
+}
+.chub-avatar--sand { background: #ecd9c5; color: #8b6848; }
+.chub-avatar--mint { background: #d7e6d8; color: #3e6950; }
+.chub-avatar--blue { background: #cfe0f3; color: #2f5b86; }
+.chub-avatar--lilac { background: #e3dcf3; color: #5b4a86; }
+
+.chub-pointer {
+  width: 15px;
+  height: 15px;
+  margin-left: -3px;
+  margin-top: 10px;
+  fill: currentColor;
+}
+.chub-pointer--rose { color: #e05a7a; }
+.chub-pointer--green { color: #16a34a; }
+.chub-pointer--violet { color: #8b5cf6; }
+.chub-pointer--teal { color: #0d9488; }
+
+/* Hand-written notes in the margins. */
+.chub-note {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-ink);
+  font-family: var(--cap-handwriting), cursive;
+  font-size: 17px;
+  line-height: 1.05;
+}
+.chub-note svg { width: 20px; height: 20px; }
+.chub-note--start { top: -2%; left: 4%; color: #d1655a; }
+.chub-note--clarity { top: 0; right: 6%; color: var(--heading-accent, #065f46); }
+
+@media (max-width: 700px) {
+  .chub-note { display: none; }
+  .chub-cursor--three, .chub-cursor--four { display: none; }
+  .chub-card { padding: 9px 11px; }
+  .chub-card__icon { width: 28px; height: 28px; }
+  .chub-card__text strong { font-size: 11px; }
+  .chub-card__text small { font-size: 8px; }
+  .chub-hub { padding: 9px 14px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closing-hub * { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,263 @@
+/* Capabilities — chapter-based editorial layout.
+ *
+ * A deliberate departure from the previous board-preview showcase: this page is
+ * organised as five numbered "chapters" that a reader moves through, with a
+ * fixed progress bar and one live interactive demonstration per chapter.
+ *
+ * The page deliberately shares the landing page's design system rather than
+ * inventing its own: the same paper background, ink and muted-ink colours, the
+ * same Instrument Serif headings with a green italic accent, the same dotted
+ * architectural grid. Everything structural is Tailwind utilities in the
+ * component; this file holds only what utilities cannot express — the custom
+ * shadows, the scroll-reveal transition, the animated connector wires, and the
+ * spring-grab affordance.
+ */
+
+.capabilities-showcase {
+  position: relative;
+  /* The page's dot-grid texture is painted by a ::before at a negative
+     z-index, so the element has to establish a stacking context for it to
+     sit behind the content rather than behind the whole page. */
+  isolation: isolate;
+  /* `clip` rather than `hidden`: `hidden` would make this element a scroll
+     container, which silently breaks anchor links and `scrollIntoView` for
+     every section below it. `clip` contains the overflow without that. */
+  overflow-x: clip;
+  background: var(--landing-background, #faf9f6);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+.capabilities-showcase ::selection { background: var(--signal); color: var(--paper); }
+.capabilities-showcase a { text-decoration: none; }
+.capabilities-showcase a:focus-visible,
+.capabilities-showcase button:focus-visible {
+  outline: 2px solid var(--heading-accent);
+  outline-offset: 3px;
+}
+
+/* Whiteboard square grid, used inside every canvas card. */
+.capx-canvas {
+  background-color: #fff;
+  background-image:
+    linear-gradient(to right, rgba(226, 232, 240, 0.7) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.7) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Two shadow depths: "stage" for cards resting on the page, "float" for
+   things lifted above the card (menus, comment bubbles). */
+.capx-stage {
+  box-shadow:
+    0 24px 50px -12px rgba(15, 23, 42, 0.08),
+    0 8px 20px -4px rgba(15, 23, 42, 0.04),
+    0 0 0 1px var(--rule);
+}
+.capx-float {
+  box-shadow:
+    0 16px 36px -8px rgba(15, 23, 42, 0.12),
+    0 4px 12px -2px rgba(15, 23, 42, 0.06),
+    0 0 0 1px var(--rule);
+}
+
+/* Scroll reveal.
+ * Content is visible by default and only hidden once the script has decided
+ * it is worth animating in — so the page is never blank, with or without
+ * JavaScript, and the first screen never waits on an observer.
+ * `.is-armed` marks a section as "not yet revealed"; `.is-in` reveals it. */
+.capx-reveal {
+  opacity: 1;
+  transform: none;
+}
+.capx-reveal.is-armed {
+  opacity: 0;
+  transform: translateY(36px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.capx-reveal.is-armed.is-in { opacity: 1; transform: translateY(0); }
+
+/* Connector wires draw themselves in when the `.is-drawn` class lands.
+ * Like the nodes, the wires are visible by default and only hidden once the
+ * script has armed the draw sequence, so a diagram is never left without
+ * connectors. */
+.capx-wire {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+}
+.capx-wire.is-armed {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  transition: stroke-dashoffset 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.capx-wire.is-armed.is-drawn { stroke-dashoffset: 0; }
+
+/* Spring-grab affordance for anything the reader can pick up and move. */
+.capx-spring {
+  touch-action: none;
+  cursor: grab;
+  transition: box-shadow 0.2s ease;
+}
+.capx-spring:active { cursor: grabbing; }
+
+/* Typography helpers.
+ * The landing page sets its headings in the display serif and marks the accent
+ * phrase with an italic `em`; the annotations use the same serif. Mono is the
+ * system mono stack, as elsewhere in the project. */
+.capx-hand,
+.capx-serif { font-family: var(--font-display), Georgia, serif; }
+.capx-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Fixed scroll progress bar. */
+.capx-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  height: 3px;
+  background: linear-gradient(90deg, var(--signal), var(--heading-accent));
+  transition: width 75ms linear;
+}
+
+/* Hero board tilts toward the pointer. */
+.capx-3d { perspective: 1200px; }
+.capx-3d-frame {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 300ms ease-out;
+}
+
+/* Nodes in the generated flowchart pop in one after another.
+ * Like the section reveal, the nodes are visible by default and only hidden
+ * once the script has decided to animate them, so a diagram is never left
+ * empty because an observer never reported. */
+.capx-flow-node {
+  opacity: 1;
+  transform: none;
+}
+.capx-flow-node.is-armed {
+  opacity: 0;
+  transform: translateY(15px) scale(0.92);
+}
+.capx-flow-node.is-armed.is-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Spawned shapes on the interactive canvas. */
+.capx-spawned {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+  box-shadow: 0 10px 20px -12px rgb(15 23 42 / 0.4);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  transition: transform 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+/* The next item to be retired when the canvas is full. */
+.capx-spawned.is-oldest { border-style: dashed; opacity: 0.85; }
+.capx-spawned.is-selected {
+  border-color: var(--heading-accent);
+  box-shadow: 0 0 0 3px rgb(6 95 70 / 0.16), 0 10px 20px -12px rgb(15 23 42 / 0.4);
+}
+/* Retiring: the oldest item fades and shrinks out to make room. */
+.capx-spawned.is-leaving {
+  opacity: 0;
+  transform: scale(0.55);
+  transition: opacity 380ms ease, transform 380ms ease;
+  pointer-events: none;
+}
+
+/* The remove control on a spawned element. */
+.capx-remove {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  z-index: 40;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted-ink);
+  opacity: 0;
+  transition: opacity 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.capx-spawned:hover .capx-remove,
+.capx-spawned:focus-within .capx-remove { opacity: 1; }
+.capx-remove:hover { border-color: #dc2626; color: #dc2626; }
+.capx-remove:focus-visible { opacity: 1; }
+
+/* Slot meter: how much room is left on the canvas. */
+.capx-slots { display: flex; align-items: center; gap: 5px; }
+.capx-slot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: #fff;
+  transition: background-color 220ms ease, border-color 220ms ease;
+}
+.capx-slot.is-filled { border-color: var(--signal); background: var(--signal); }
+.capx-slot.is-next { border-color: var(--heading-accent); border-style: dashed; background: transparent; }
+.capx-clear {
+  border: 0;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: transparent;
+  color: var(--muted-ink);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+.capx-clear:hover { background: #f1f5f9; color: var(--ink); }
+
+/* Multiplayer cursors drift across the canvas. */
+.capx-cursor {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  transition: transform 700ms ease-out;
+}
+
+/* The AI-injected node scales in. */
+.capx-injected {
+  opacity: 0;
+  transform: scale(0.75);
+  transition: opacity 500ms ease, transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.capx-injected.is-in { opacity: 1; transform: scale(1); }
+.capx-injected.is-flash { box-shadow: 0 0 0 4px rgb(196 181 253 / 0.75); }
+
+@media (prefers-reduced-motion: reduce) {
+  .capabilities-showcase *,
+  .capabilities-showcase *::after,
+  .capabilities-showcase *::before {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .capx-reveal { opacity: 1; transform: none; }
+  .capx-flow-node { opacity: 1; transform: none; }
+  .capx-injected { opacity: 1; transform: none; }
+}
