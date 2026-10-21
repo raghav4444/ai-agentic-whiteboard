@@ -1189,29 +1189,29 @@ function MultiplayerStage() {
           in real time.
         </HandNote>
 
-        <div ref={stageRef} className="capx-stage capx-canvas relative flex min-h-[360px] flex-1 flex-col justify-between overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
+        <div ref={stageRef} className="capx-stage capx-canvas relative flex min-h-[430px] flex-1 flex-col overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
           <WindowBar title="Team Canvas" />
 
-          <div ref={sarahRef} className="capx-cursor" style={{ top: 30, left: 60 }}>
+          <div ref={sarahRef} className="capx-cursor" style={{ top: 108, left: 40 }}>
             <svg className="size-5 fill-emerald-600 text-emerald-600 drop-shadow-md" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 4l16 8-8 2-2 8z" />
             </svg>
             <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">Sarah</span>
           </div>
-          <div ref={alexRef} className="capx-cursor" style={{ top: 50, right: 120 }}>
+          <div ref={alexRef} className="capx-cursor" style={{ top: 140, right: 110 }}>
             <svg className="size-5 fill-blue-600 text-blue-600 drop-shadow-md" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 4l16 8-8 2-2 8z" />
             </svg>
             <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">Alex</span>
           </div>
-          <div ref={youRef} className="capx-cursor" style={{ bottom: 40, right: 60 }}>
+          <div ref={youRef} className="capx-cursor" style={{ bottom: 150, right: 50 }}>
             <svg className="size-5 fill-purple-600 text-purple-600 drop-shadow-md" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 4l16 8-8 2-2 8z" />
             </svg>
             <span className="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">You</span>
           </div>
 
-          <div className="relative mx-auto mt-6 flex w-full max-w-[340px] items-center justify-between">
+          <div className="relative mx-auto mt-12 flex w-full max-w-[340px] items-center justify-between">
             <div className="capx-spring flex flex-col items-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
               <span className="text-xs font-bold text-blue-700">Frontend</span>
             </div>

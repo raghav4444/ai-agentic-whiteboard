@@ -144,8 +144,6 @@ export default function ClosingHub() {
         {/* ---- The hub ---- */}
         <div className="closing-hub__visual">
           <div ref={frameRef} className="chub-frame">
-            <div className="chub-wash" aria-hidden="true" />
-
             {/* Connectors from the hub out to each pillar. */}
             <svg
               className="chub-links"

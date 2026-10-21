@@ -20,7 +20,7 @@
 }
 
 @media (min-width: 992px) {
-  .closing-hub__grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 72px; }
+  .closing-hub__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 64px; }
 }
 
 /* ---- Copy column ---- */
@@ -48,10 +48,10 @@
 .closing-hub h2 {
   margin: 22px 0 0;
   color: var(--ink);
-  font-size: clamp(38px, 4.2vw, 58px);
+  font-size: clamp(32px, 3.5vw, 48px);
   font-weight: 600;
-  letter-spacing: -0.055em;
-  line-height: 1;
+  letter-spacing: -0.05em;
+  line-height: 1.06;
 }
 .closing-hub h2 em {
   color: var(--heading-accent, #065f46);
@@ -109,19 +109,6 @@
   aspect-ratio: 520 / 400;
 }
 
-/* The soft green wash the whole hub sits in. */
-.chub-wash {
-  position: absolute;
-  inset: -6% -2% -10% -4%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 45%, rgb(209 250 229 / 0.55), transparent 62%),
-    radial-gradient(circle at 78% 22%, rgb(219 234 254 / 0.42), transparent 58%),
-    radial-gradient(circle at 20% 78%, rgb(254 243 199 / 0.4), transparent 58%);
-  filter: blur(18px);
-  pointer-events: none;
-}
-
 /* Connectors from the hub out to each pillar. */
 .chub-links {
   position: absolute;
@@ -177,10 +164,10 @@
 
 /* The four pillars. */
 .chub-slot { position: absolute; z-index: 4; }
-.chub-slot--tl { top: 4%; left: 2%; }
-.chub-slot--tr { top: 4%; right: 0; }
-.chub-slot--bl { bottom: 16%; left: 4%; }
-.chub-slot--br { right: -1%; bottom: 10%; }
+.chub-slot--tl { top: 17%; left: 1%; }
+.chub-slot--tr { top: 17%; right: 0; }
+.chub-slot--bl { bottom: 12%; left: 3%; }
+.chub-slot--br { right: 0; bottom: 6%; }
 
 .chub-card {
   display: flex;
@@ -227,10 +214,10 @@
   display: flex;
   align-items: center;
 }
-.chub-cursor--one { top: 0; left: 26%; }
-.chub-cursor--two { top: 2%; right: 18%; }
-.chub-cursor--three { top: 44%; right: 0; }
-.chub-cursor--four { bottom: 4%; left: 38%; }
+.chub-cursor--one { top: 32%; left: 19%; }
+.chub-cursor--two { top: 34%; right: 21%; }
+.chub-cursor--three { top: 54%; right: 3%; }
+.chub-cursor--four { bottom: 30%; left: 33%; }
 
 .chub-avatar {
   display: grid;
@@ -273,8 +260,8 @@
   line-height: 1.05;
 }
 .chub-note svg { width: 20px; height: 20px; }
-.chub-note--start { top: -2%; left: 4%; color: #d1655a; }
-.chub-note--clarity { top: 0; right: 6%; color: var(--heading-accent, #065f46); }
+.chub-note--start { top: 0; left: 2%; color: #d1655a; }
+.chub-note--clarity { top: 0; right: 1%; color: var(--heading-accent, #065f46); }
 
 @media (max-width: 700px) {
   .chub-note { display: none; }
