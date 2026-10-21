@@ -410,7 +410,7 @@ function GenerateStage() {
         <h2 className="text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[var(--ink)] sm:text-4xl lg:text-[46px]">
           Describe your idea.
           <br />
-          <span className="text-[var(--ink)]">Get a visual diagram.</span>
+          <em className="capx-serif font-normal italic text-[var(--heading-accent)]">Get a visual diagram.</em>
         </h2>
         <p className="text-base font-normal leading-relaxed text-[var(--muted-ink)]">
           Turn natural language into professional diagrams, flowcharts, system architectures, and more — instantly.
@@ -810,7 +810,7 @@ function CanvasStage() {
         <h2 className="text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[var(--ink)] sm:text-4xl lg:text-[46px]">
           More than diagrams.
           <br />
-          <em className="capx-serif italic text-[var(--heading-accent)]">A complete canvas.</em>
+          <em className="capx-serif font-normal italic text-[var(--heading-accent)]">A complete canvas.</em>
         </h2>
         <p className="text-base font-normal leading-relaxed text-[var(--muted-ink)]">
           Express your ideas visually with powerful tools. Add shapes, text, images, icons, and connectors to make your diagrams truly yours.
@@ -1064,7 +1064,7 @@ function CopilotStage() {
         <h2 className="text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[var(--ink)] sm:text-4xl lg:text-[46px]">
           Get AI guidance
           <br />
-          <em className="capx-serif italic text-[var(--heading-accent)]">at every step.</em>
+          <em className="capx-serif font-normal italic text-[var(--heading-accent)]">at every step.</em>
         </h2>
         <p className="text-base font-normal leading-relaxed text-[var(--muted-ink)]">
           Use the built-in AI Helper to refine your diagram, add new elements, improve structure, or explore the next steps in your project.
@@ -1286,7 +1286,7 @@ function MultiplayerStage() {
         <h2 className="text-3xl font-semibold leading-[1.02] tracking-[-0.045em] text-[var(--ink)] sm:text-4xl lg:text-[46px]">
           Build together,
           <br />
-          <em className="capx-serif italic text-[var(--heading-accent)]">anywhere.</em>
+          <em className="capx-serif font-normal italic text-[var(--heading-accent)]">anywhere.</em>
         </h2>
         <p className="text-base font-normal leading-relaxed text-[var(--muted-ink)]">
           Invite your team, share your workspace, and collaborate in real time. Perfect for product teams, engineers, designers, and technical stakeholders.
@@ -1676,7 +1676,7 @@ export default function CapabilitiesShowcase() {
               <br />
               ideas into
               <br />
-              <em className="capx-serif italic text-[var(--heading-accent)]">clear diagrams.</em>
+              <em className="capx-serif font-normal italic text-[var(--heading-accent)]">clear diagrams.</em>
             </h1>
 
             <p className="max-w-md text-base font-normal leading-relaxed text-[var(--muted-ink)] sm:text-lg">
