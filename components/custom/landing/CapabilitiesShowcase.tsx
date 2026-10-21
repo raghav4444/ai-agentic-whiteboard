@@ -318,30 +318,11 @@ function GenerateStage() {
   const [wiresDrawn, setWiresDrawn] = useState(0);
   const [phase, setPhase] = useState<'idle' | 'typing' | 'drawing' | 'done'>('idle');
   const sectionRef = useRef<HTMLElement>(null);
-  const matrixRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const { ref: matrixRef, scale } = useDiagramScale(520);
 
   // Arm the nodes and wires for their entrance only once the sequence is
   // about to run, so a diagram is never left empty if the observer is quiet.
   const armed = phase !== 'idle';
-
-  // The diagram is laid out in a fixed 520x260 space so the connector
-  // coordinates and the node positions agree. When the column is narrower
-  // than that, the whole thing scales down rather than letting the last node
-  // clip off the edge.
-  useEffect(() => {
-    const element = matrixRef.current;
-    if (!element) return;
-    const measure = () => {
-      const available = element.clientWidth;
-      if (!available) return;
-      setScale(Math.min(1, available / 520));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
 
   // Type the prompt out once, when the chapter first comes into view.
   //
@@ -973,9 +954,49 @@ function CanvasStage() {
   );
 }
 
+/**
+ * Scale a fixed-width diagram so it fits its column.
+ *
+ * The diagrams are laid out in a fixed coordinate space so the SVG connectors
+ * and the nodes agree with each other. When the column is narrower than that
+ * space the whole thing scales down, rather than the nodes drifting out of
+ * line with the connectors.
+ */
+function useDiagramScale(width: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => {
+      const available = element.clientWidth;
+      if (!available) return;
+      setScale(Math.min(1, available / width));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [width]);
+
+  return { ref, scale };
+}
+
+/* ------------------------------------------------------------------ *
+ * Chapter 03 — the copilot that actually edits the diagram
+ * ------------------------------------------------------------------ */
+
+/** The service graph is laid out in this fixed space so the connectors and
+ *  the nodes always agree. It is sized to the column it sits in, so the
+ *  diagram renders at its natural size rather than being scaled down. */
+const GRAPH_WIDTH = 400;
+const GRAPH_HEIGHT = 200;
+
 function CopilotStage() {
   const [injected, setInjected] = useState(false);
   const [flash, setFlash] = useState(false);
+  const { ref: graphRef, scale: graphScale } = useDiagramScale(GRAPH_WIDTH);
 
   const inject = () => {
     setInjected(true);
@@ -1018,30 +1039,68 @@ function CopilotStage() {
             </span>
           </WindowBar>
 
-          <div className="relative my-6 flex w-full items-center justify-between gap-1 px-1">
-            <NodeCard title="Web App" Icon={Globe} tone="border-blue-200 text-blue-600" className="w-16" />
+          {/* The service graph. Laid out in a fixed 520x260 space so the
+              connectors and the nodes land on each other exactly. */}
+          <div className="relative my-6 flex w-full justify-center">
+            <div ref={graphRef} className="relative w-full">
+              <div
+                className="relative"
+                style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT, transform: `scale(${graphScale})`, transformOrigin: 'top left' }}
+              >
+                <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full" viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`} preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <marker id="capxGraphArrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+                    </marker>
+                    <marker id="capxGraphArrowGreen" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6 Z" fill="#34d399" />
+                    </marker>
+                  </defs>
 
-            <div
-              className={`capx-spring capx-injected relative flex w-20 flex-col items-center gap-1.5 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
-                injected ? 'is-in' : ''
-              } ${flash ? 'is-flash' : ''}`}
-            >
-              <span className="absolute -top-2 rounded-full bg-purple-600 px-1 py-0.5 text-[8px] font-bold text-white">AI INJECTED</span>
-              <Lock size={16} className="text-purple-600" />
-              <span className="text-center text-[9.5px] font-bold leading-tight text-purple-950">Auth Service</span>
+                  {/* The request chain. Before the copilot adds a service the
+                      chain runs straight from the web app to the API; once it
+                      is injected the chain is split around it. */}
+                  {injected ? (
+                    <>
+                      <line x1="88" y1="62" x2="100" y2="62" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrow)" />
+                      <line x1="194" y1="62" x2="206" y2="62" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrow)" />
+                    </>
+                  ) : (
+                    <line x1="88" y1="62" x2="206" y2="62" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrow)" />
+                  )}
+                  <line x1="296" y1="62" x2="308" y2="62" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrow)" />
+
+                  {/* The API reads from the database. */}
+                  <path d="M 252 94 V 146" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrowGreen)" />
+                </svg>
+
+                <div className="absolute left-0 top-[30px] h-[64px] w-[88px]">
+                  <NodeCard title="Web App" Icon={Globe} tone="border-blue-200 text-blue-600" className="h-full w-full" />
+                </div>
+
+                <div
+                  className={`capx-spring capx-injected absolute left-[102px] top-[30px] h-[64px] w-[92px] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
+                    injected ? 'is-in' : ''
+                  } ${flash ? 'is-flash' : ''}`}
+                >
+                  <span className="absolute -top-2 rounded-full bg-purple-600 px-1 py-0.5 text-[8px] font-bold text-white">AI INJECTED</span>
+                  <Lock size={16} className="text-purple-600" />
+                  <span className="text-center text-[9.5px] font-bold leading-tight text-purple-950">Auth Service</span>
+                </div>
+
+                <div className="absolute left-[208px] top-[30px] h-[64px] w-[88px]">
+                  <NodeCard title="API" Icon={Network} tone="border-emerald-200 text-[var(--heading-accent)]" className="h-full w-full" />
+                </div>
+
+                <div className="absolute left-[310px] top-[30px] h-[64px] w-[90px]">
+                  <NodeCard title="AI Service" Icon={Box} tone="border-purple-200 text-purple-600" className="h-full w-full" />
+                </div>
+
+                <div className="absolute left-[197px] top-[150px] h-[46px] w-[110px]">
+                  <NodeCard title="Database" Icon={Layers} tone="border-amber-200 text-amber-600" className="h-full w-full" />
+                </div>
+              </div>
             </div>
-
-            <NodeCard title="API" Icon={Network} tone="border-emerald-200 text-[var(--heading-accent)]" className="w-16" />
-
-            <NodeCard title="AI Service" Icon={Box} tone="border-purple-200 text-purple-600" className="w-16" />
-          </div>
-
-          {/* The database hangs below the service layer. It sits in the normal
-              flow rather than being pinned to the canvas, so it cannot drift
-              over the nodes above it when the row reflows. */}
-          <div className="-mt-3 flex flex-col items-center">
-            <span className="h-8 w-0.5 bg-neutral-300" aria-hidden="true" />
-            <NodeCard title="Database" Icon={Layers} tone="border-amber-200 text-amber-600" className="w-16" />
           </div>
 
           <div className="capx-mono pt-2 text-center text-[11px] text-[var(--muted-ink)]">
@@ -1117,6 +1176,7 @@ function CopilotStage() {
 
 function MultiplayerStage() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const { ref: graphRef, scale: graphScale } = useDiagramScale(GRAPH_WIDTH);
   const sarahRef = useRef<HTMLDivElement>(null);
   const alexRef = useRef<HTMLDivElement>(null);
   const youRef = useRef<HTMLDivElement>(null);
@@ -1211,17 +1271,34 @@ function MultiplayerStage() {
             <span className="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">You</span>
           </div>
 
-          <div className="relative mx-auto mt-12 flex w-full max-w-[340px] items-center justify-between">
-            <div className="capx-spring flex flex-col items-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
-              <span className="text-xs font-bold text-blue-700">Frontend</span>
-            </div>
-            <span className="h-0.5 w-8 bg-neutral-300" aria-hidden="true" />
-            <div className="capx-spring flex flex-col items-center rounded-xl border border-emerald-300 bg-white p-2.5 shadow-sm">
-              <span className="text-xs font-bold text-emerald-700">API</span>
-            </div>
-            <span className="h-0.5 w-8 bg-neutral-300" aria-hidden="true" />
-            <div className="capx-spring flex flex-col items-center rounded-xl border border-purple-300 bg-white p-2.5 shadow-sm">
-              <span className="text-xs font-bold text-purple-700">AI Service</span>
+          {/* The shared diagram, on the same fixed grid as the other chapters so
+              the connectors and the nodes line up. */}
+          <div className="relative my-6 flex w-full justify-center">
+            <div ref={graphRef} className="relative w-full">
+              <div
+                className="relative"
+                style={{ width: GRAPH_WIDTH, height: 120, transform: `scale(${graphScale})`, transformOrigin: 'top left' }}
+              >
+                <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full" viewBox={`0 0 ${GRAPH_WIDTH} 120`} preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <marker id="capxCollabArrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+                    </marker>
+                  </defs>
+                  <line x1="112" y1="52" x2="142" y2="52" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxCollabArrow)" />
+                  <line x1="258" y1="52" x2="288" y2="52" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxCollabArrow)" />
+                </svg>
+
+                <div className="absolute left-0 top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
+                  <span className="text-xs font-bold text-blue-700">Frontend</span>
+                </div>
+                <div className="absolute left-[142px] top-[26px] flex h-[52px] w-[116px] flex-col items-center justify-center rounded-xl border border-emerald-300 bg-white p-2.5 shadow-sm">
+                  <span className="text-xs font-bold text-emerald-700">API</span>
+                </div>
+                <div className="absolute left-[288px] top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-purple-300 bg-white p-2.5 shadow-sm">
+                  <span className="text-xs font-bold text-purple-700">AI Service</span>
+                </div>
+              </div>
             </div>
           </div>
 
