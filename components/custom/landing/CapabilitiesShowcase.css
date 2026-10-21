@@ -103,6 +103,26 @@
 }
 .capx-spring:active { cursor: grabbing; }
 
+/* Diagram pieces you can pick up.
+ *
+ * They follow the pointer while held and spring back to where they started
+ * when released, so the board can be handled without losing its arrangement.
+ * The offset is applied with the `translate` property, which composes with the
+ * `rotate` on the sticky notes instead of replacing it. */
+.capx-grab {
+  touch-action: none;
+  cursor: grab;
+  transition:
+    transform 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    translate 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 420ms ease;
+}
+.capx-grab:active { cursor: grabbing; }
+.capx-grab[data-grabbing='true'] {
+  z-index: 40;
+  box-shadow: 0 26px 40px -18px rgb(15 23 42 / 0.42);
+}
+
 /* Diagram nodes lift away from the board when the pointer lands on them.
  * A short spring rather than a plain ease, so the node overshoots slightly
  * and settles — the same feel as the canvas grabbing a shape. */

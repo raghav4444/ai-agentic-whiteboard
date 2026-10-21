@@ -164,6 +164,7 @@ function NodeCard({
 
 function HeroStage() {
   const frameRef = useRef<HTMLDivElement>(null);
+  const grab = useSpringBack();
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -264,7 +265,7 @@ function HeroStage() {
                 rather than being pinned to the canvas, so it stays aligned
                 with the API node however the row reflows. */}
             <div className="absolute left-1/2 top-[78px] h-9 w-0.5 -translate-x-1/2 bg-neutral-300" aria-hidden="true" />
-            <div className="capx-node capx-spring absolute left-1/2 top-[118px] flex w-24 -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-amber-200 bg-white p-3 shadow-md">
+            <div {...grab} className="capx-node capx-grab absolute left-1/2 top-[118px] flex w-24 -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-amber-200 bg-white p-3 shadow-md">
               <span className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                 <Layers size={20} />
               </span>
@@ -603,6 +604,7 @@ const ICON_TILES: { icon: typeof Globe; label: string; tone: string }[] = [
 ];
 
 function CanvasStage() {
+  const grab = useSpringBack();
   const [board, setBoard] = useState<Board>(EMPTY_BOARD);
   const nextId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -863,15 +865,15 @@ function CanvasStage() {
               }
             }}
           >
-            <div className="capx-spring absolute -top-1 left-4 w-24 rotate-[-4deg] rounded-xl border border-pink-200 bg-pink-100 p-3 shadow-md">
+            <div {...grab} className="capx-grab absolute -top-1 left-4 w-24 rotate-[-4deg] rounded-xl border border-pink-200 bg-pink-100 p-3 shadow-md">
               <p className="capx-hand text-sm font-bold leading-tight text-pink-900">Drag.<br />Drop.<br />Create.</p>
             </div>
-            <div className="capx-spring absolute -top-2 right-12 w-24 rotate-[3deg] rounded-xl border border-purple-200 bg-purple-100 p-3 text-center shadow-md">
+            <div {...grab} className="capx-grab absolute -top-2 right-12 w-24 rotate-[3deg] rounded-xl border border-purple-200 bg-purple-100 p-3 text-center shadow-md">
               <p className="capx-hand text-sm font-bold leading-tight text-purple-900">Fully<br />Editable</p>
             </div>
 
             <div className="absolute left-0 right-0 top-28 flex items-center justify-center gap-2 px-2">
-              <div className="capx-spring relative flex flex-col items-center rounded-2xl border-2 border-blue-500 bg-white p-3 shadow-md">
+              <div {...grab} className="capx-grab relative flex flex-col items-center rounded-2xl border-2 border-blue-500 bg-white p-3 shadow-md">
                 <span className="absolute -left-1.5 -top-1.5 size-2 rounded-full border border-white bg-blue-600" />
                 <span className="absolute -right-1.5 -top-1.5 size-2 rounded-full border border-white bg-blue-600" />
                 <span className="absolute -bottom-1.5 -left-1.5 size-2 rounded-full border border-white bg-blue-600" />
@@ -880,12 +882,12 @@ function CanvasStage() {
                 <span className="capx-mono text-[9px] text-[var(--muted-ink)]">Next.js</span>
               </div>
               <span className="h-0.5 w-8 bg-neutral-300" aria-hidden="true" />
-              <div className="capx-spring flex flex-col items-center rounded-2xl border border-emerald-300 bg-white p-3 shadow-sm">
+              <div {...grab} className="capx-grab flex flex-col items-center rounded-2xl border border-emerald-300 bg-white p-3 shadow-sm">
                 <span className="text-xs font-bold text-emerald-700">API</span>
                 <span className="capx-mono text-[9px] text-[var(--muted-ink)]">Node.js</span>
               </div>
               <span className="h-0.5 w-8 bg-neutral-300" aria-hidden="true" />
-              <div className="capx-spring flex flex-col items-center rounded-2xl border border-amber-300 bg-white p-3 shadow-sm">
+              <div {...grab} className="capx-grab flex flex-col items-center rounded-2xl border border-amber-300 bg-white p-3 shadow-sm">
                 <span className="text-xs font-bold text-amber-700">Database</span>
                 <span className="capx-mono text-[9px] text-[var(--muted-ink)]">PostgreSQL</span>
               </div>
@@ -993,7 +995,58 @@ function useDiagramScale(width: number) {
 const GRAPH_WIDTH = 400;
 const GRAPH_HEIGHT = 200;
 
+/**
+ * Spring-back dragging for the pieces on a board.
+ *
+ * A piece follows the pointer while it is held, then springs back to where it
+ * started when released — so the board can be handled without losing its
+ * arrangement.
+ *
+ * The offset goes through the `translate` property rather than `transform`,
+ * so it composes with the `rotate` on the sticky notes instead of wiping it
+ * out, and it leaves the hover transform free to do its own thing.
+ */
+function useSpringBack() {
+  const onPointerDown = useCallback((event: React.PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const target = event.currentTarget;
+    try {
+      target.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Capture is a nicety; the drag still works without it.
+    }
+    target.dataset.grabbing = 'true';
+    target.dataset.originX = String(event.clientX);
+    target.dataset.originY = String(event.clientY);
+    // Follow the pointer exactly while held, with no easing trailing behind.
+    target.style.transition = 'none';
+  }, []);
+
+  const onPointerMove = useCallback((event: React.PointerEvent<HTMLElement>) => {
+    const target = event.currentTarget;
+    if (target.dataset.grabbing !== 'true') return;
+    const dx = event.clientX - Number(target.dataset.originX ?? 0);
+    const dy = event.clientY - Number(target.dataset.originY ?? 0);
+    target.style.translate = `${dx}px ${dy}px`;
+  }, []);
+
+  const onPointerUp = useCallback((event: React.PointerEvent<HTMLElement>) => {
+    const target = event.currentTarget;
+    if (target.dataset.grabbing !== 'true') return;
+    delete target.dataset.grabbing;
+    target.style.transition = '';
+    // Restore the transition first, then clear the offset, so the piece
+    // springs back rather than snapping.
+    window.requestAnimationFrame(() => {
+      target.style.translate = '';
+    });
+  }, []);
+
+  return { onPointerDown, onPointerMove, onPointerUp };
+}
+
 function CopilotStage() {
+  const grab = useSpringBack();
   const [injected, setInjected] = useState(false);
   const [flash, setFlash] = useState(false);
   const { ref: graphRef, scale: graphScale } = useDiagramScale(GRAPH_WIDTH);
@@ -1074,11 +1127,11 @@ function CopilotStage() {
                   <path d="M 252 94 V 146" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxGraphArrowGreen)" />
                 </svg>
 
-                <div className="capx-node absolute left-0 top-[30px] h-[64px] w-[88px]">
+                <div {...grab} className="capx-node capx-grab absolute left-0 top-[30px] h-[64px] w-[88px]">
                   <NodeCard title="Web App" Icon={Globe} tone="border-blue-200 text-blue-600" className="h-full w-full" />
                 </div>
 
-                <div className="capx-node absolute left-[102px] top-[30px] h-[64px] w-[92px]">
+                <div {...grab} className="capx-node capx-grab absolute left-[102px] top-[30px] h-[64px] w-[92px]">
                 <div
                   className={`capx-spring capx-injected relative flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-purple-400 bg-purple-50 p-2.5 shadow-md ${
                     injected ? 'is-in' : ''
@@ -1090,15 +1143,15 @@ function CopilotStage() {
                 </div>
                 </div>
 
-                <div className="capx-node absolute left-[208px] top-[30px] h-[64px] w-[88px]">
+                <div {...grab} className="capx-node capx-grab absolute left-[208px] top-[30px] h-[64px] w-[88px]">
                   <NodeCard title="API" Icon={Network} tone="border-emerald-200 text-[var(--heading-accent)]" className="h-full w-full" />
                 </div>
 
-                <div className="capx-node absolute left-[310px] top-[30px] h-[64px] w-[90px]">
+                <div {...grab} className="capx-node capx-grab absolute left-[310px] top-[30px] h-[64px] w-[90px]">
                   <NodeCard title="AI Service" Icon={Box} tone="border-purple-200 text-purple-600" className="h-full w-full" />
                 </div>
 
-                <div className="capx-node absolute left-[197px] top-[150px] h-[46px] w-[110px]">
+                <div {...grab} className="capx-node capx-grab absolute left-[197px] top-[150px] h-[46px] w-[110px]">
                   <NodeCard title="Database" Icon={Layers} tone="border-amber-200 text-amber-600" className="h-full w-full" />
                 </div>
               </div>
@@ -1178,6 +1231,7 @@ function CopilotStage() {
 
 function MultiplayerStage() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const grab = useSpringBack();
   const { ref: graphRef, scale: graphScale } = useDiagramScale(GRAPH_WIDTH);
   const sarahRef = useRef<HTMLDivElement>(null);
   const alexRef = useRef<HTMLDivElement>(null);
@@ -1291,13 +1345,13 @@ function MultiplayerStage() {
                   <line x1="258" y1="52" x2="288" y2="52" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" markerEnd="url(#capxCollabArrow)" />
                 </svg>
 
-                <div className="capx-node absolute left-0 top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
+                <div {...grab} className="capx-node capx-grab absolute left-0 top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-blue-300 bg-white p-2.5 shadow-sm">
                   <span className="text-xs font-bold text-blue-700">Frontend</span>
                 </div>
-                <div className="capx-node absolute left-[142px] top-[26px] flex h-[52px] w-[116px] flex-col items-center justify-center rounded-xl border border-emerald-300 bg-white p-2.5 shadow-sm">
+                <div {...grab} className="capx-node capx-grab absolute left-[142px] top-[26px] flex h-[52px] w-[116px] flex-col items-center justify-center rounded-xl border border-emerald-300 bg-white p-2.5 shadow-sm">
                   <span className="text-xs font-bold text-emerald-700">API</span>
                 </div>
-                <div className="capx-node absolute left-[288px] top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-purple-300 bg-white p-2.5 shadow-sm">
+                <div {...grab} className="capx-node capx-grab absolute left-[288px] top-[26px] flex h-[52px] w-[112px] flex-col items-center justify-center rounded-xl border border-purple-300 bg-white p-2.5 shadow-sm">
                   <span className="text-xs font-bold text-purple-700">AI Service</span>
                 </div>
               </div>
