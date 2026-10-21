@@ -211,21 +211,21 @@ function HeroStage() {
             <span className="size-2.5 rounded-full bg-[#ef4444]" />
             <span className="size-2.5 rounded-full bg-[#f59e0b]" />
             <span className="size-2.5 rounded-full bg-[#10b981]" />
-            <span className="ml-2 whitespace-nowrap text-xs font-bold text-[var(--muted-ink)]">● AI Whiteboard</span>
+            <span className="ml-2 min-w-0 truncate text-xs font-bold text-[var(--muted-ink)]">● AI Whiteboard</span>
           </div>
-          <div className="flex items-center gap-1 rounded-lg bg-neutral-200/60 p-0.5 text-[11px] font-bold">
+          <div className="hidden items-center gap-1 rounded-lg bg-neutral-200/60 p-0.5 text-[11px] font-bold sm:flex">
             <span className="rounded-md bg-white px-2.5 py-0.5 text-[var(--ink)] shadow-2xs">Whiteboard</span>
             <span className="rounded-md px-2.5 py-0.5 text-[var(--muted-ink)]">Doc</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-2xs">
-              <Save size={12} /> Save
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-[11px] font-bold text-white shadow-2xs sm:px-2.5">
+              <Save size={12} /> <span className="hidden sm:inline">Save</span>
             </span>
-            <span className="flex items-center gap-1 rounded-md border border-[var(--rule)] bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--muted-ink)]">
-              <Share size={12} /> Share
+            <span className="flex items-center gap-1 rounded-md border border-[var(--rule)] bg-white px-2 py-1 text-[11px] font-bold text-[var(--muted-ink)] sm:px-2.5">
+              <Share size={12} /> <span className="hidden sm:inline">Share</span>
             </span>
-            <span className="flex items-center gap-1 rounded-md border border-[var(--rule)] bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--muted-ink)]">
-              <Download size={12} /> Export
+            <span className="flex items-center gap-1 rounded-md border border-[var(--rule)] bg-white px-2 py-1 text-[11px] font-bold text-[var(--muted-ink)] sm:px-2.5">
+              <Download size={12} /> <span className="hidden sm:inline">Export</span>
             </span>
           </div>
         </div>
@@ -251,8 +251,8 @@ function HeroStage() {
           <div className="relative z-10 mx-auto mt-20 mb-4 flex w-full max-w-[460px] items-center justify-between pb-28">
             {nodes.map(({ label, Icon, tone }, index) => (
               <div key={label} className="flex items-center gap-2">
-                {index > 0 && <span className="h-0.5 w-6 bg-neutral-300" aria-hidden="true" />}
-                <div className={`flex w-24 flex-col items-center gap-1.5 rounded-2xl border bg-white p-3 shadow-md ${tone}`}>
+                {index > 0 && <span className="h-0.5 w-3 shrink-0 bg-neutral-300 sm:w-6" aria-hidden="true" />}
+                <div className={`flex w-16 flex-col items-center gap-1 rounded-2xl border bg-white p-2 shadow-md sm:w-24 sm:gap-1.5 sm:p-3 ${tone}`}>
                   <span className="flex size-9 items-center justify-center rounded-xl bg-current/10">
                     <Icon size={20} />
                   </span>
@@ -481,7 +481,10 @@ function GenerateStage() {
               ))}
             </div>
 
-            <div ref={matrixRef} className="relative h-full flex-1">
+            {/* `min-w-0` lets this shrink below the width of the diagram it
+                holds. Without it the flex item keeps its content width, so the
+                scale is measured against itself and never comes down. */}
+            <div ref={matrixRef} className="capx-scroll relative h-full w-full min-w-0">
               <div
                 style={{ width: 520, height: 260, transform: `scale(${scale})`, transformOrigin: 'top left' }}
                 className="relative"
@@ -834,10 +837,10 @@ function CanvasStage() {
           Make it yours.
         </HandNote>
 
-        <div className="capx-stage capx-canvas relative flex min-h-[380px] flex-col overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
+        <div className="capx-stage capx-canvas relative flex min-h-[380px] w-full flex-col overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
           <WindowBar title="Whiteboard" />
-          <div className="flex flex-1 items-center justify-between gap-4">
-          <div className="z-10 flex w-28 select-none flex-col gap-2 rounded-2xl border border-[var(--rule)] bg-white/95 p-2.5 text-xs font-semibold text-[var(--muted-ink)] shadow-sm backdrop-blur-md">
+          <div className="flex flex-1 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="z-10 flex w-full select-none flex-row flex-wrap gap-1 rounded-2xl border border-[var(--rule)] bg-white/95 p-2 text-xs font-semibold text-[var(--muted-ink)] shadow-sm backdrop-blur-md sm:w-28 sm:flex-col sm:gap-2 sm:p-2.5">
             {SHAPE_TOOLS.map((tool) => (
               <button
                 key={tool.label}
@@ -857,7 +860,7 @@ function CanvasStage() {
 
           <div
             ref={canvasRef}
-            className="relative h-[320px] flex-1"
+            className="relative h-[220px] flex-1 sm:h-[320px]"
             onPointerDown={(event) => {
               // Clicking the empty canvas clears the selection.
               if (event.target === event.currentTarget) {
@@ -928,9 +931,9 @@ function CanvasStage() {
             </div>
           </div>
 
-          <div className="z-10 flex w-36 select-none flex-col gap-2 rounded-2xl border border-[var(--rule)] bg-white/95 p-3 shadow-md backdrop-blur-md">
+          <div className="z-10 flex w-full select-none flex-col gap-2 rounded-2xl border border-[var(--rule)] bg-white/95 p-3 shadow-md backdrop-blur-md sm:w-36">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-ink)]">Emoji and Icons</span>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-3">
               {ICON_TILES.map((tile) => (
                 <button
                   key={tile.label}
@@ -963,7 +966,13 @@ function CanvasStage() {
  * and the nodes agree with each other. When the column is narrower than that
  * space the whole thing scales down, rather than the nodes drifting out of
  * line with the connectors.
+ *
+ * The scale is floored: below roughly this the labels stop being readable, so
+ * the diagram keeps its size and the canvas scrolls sideways instead — the same
+ * gesture you would use on a real infinite canvas.
  */
+const MIN_DIAGRAM_SCALE = 0.82;
+
 function useDiagramScale(width: number) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -974,7 +983,7 @@ function useDiagramScale(width: number) {
     const measure = () => {
       const available = element.clientWidth;
       if (!available) return;
-      setScale(Math.min(1, available / width));
+      setScale(Math.max(MIN_DIAGRAM_SCALE, Math.min(1, available / width)));
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -1081,7 +1090,7 @@ function CopilotStage() {
       </div>
 
       <div className="relative flex w-full flex-col items-center gap-4 md:flex-row md:items-start lg:w-[56%]">
-        <div className="capx-stage capx-canvas relative flex min-h-[350px] flex-1 flex-col justify-between overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
+        <div className="capx-stage capx-canvas relative flex min-h-[350px] w-full flex-1 flex-col justify-between overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
           <WindowBar title="Smart System Graph">
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -1095,7 +1104,7 @@ function CopilotStage() {
           {/* The service graph. Laid out in a fixed 520x260 space so the
               connectors and the nodes land on each other exactly. */}
           <div className="relative my-6 flex w-full justify-center">
-            <div ref={graphRef} className="relative w-full">
+            <div ref={graphRef} className="capx-scroll relative w-full">
               <div
                 className="relative"
                 style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT, transform: `scale(${graphScale})`, transformOrigin: 'top left' }}
@@ -1297,7 +1306,7 @@ function MultiplayerStage() {
       </div>
 
       <div className="relative flex w-full flex-col items-center gap-4 md:flex-row md:items-start lg:w-[56%]">
-        <div className="relative flex-1">
+        <div className="relative w-full min-w-0 flex-1">
         {/* Above the canvas, pointing down at the live cursors in its corner. */}
         <HandNote className="bottom-full left-0 mb-2" tone="text-[var(--muted-ink)]">
           Work together
@@ -1305,7 +1314,7 @@ function MultiplayerStage() {
           in real time.
         </HandNote>
 
-        <div ref={stageRef} className="capx-stage capx-canvas relative flex min-h-[430px] flex-1 flex-col overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
+        <div ref={stageRef} className="capx-stage capx-canvas relative flex min-h-[430px] w-full flex-1 flex-col overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
           <WindowBar title="Team Canvas" />
 
           <div ref={sarahRef} className="capx-cursor" style={{ top: 108, left: 40 }}>
@@ -1330,7 +1339,7 @@ function MultiplayerStage() {
           {/* The shared diagram, on the same fixed grid as the other chapters so
               the connectors and the nodes line up. */}
           <div className="relative my-6 flex w-full justify-center">
-            <div ref={graphRef} className="relative w-full">
+            <div ref={graphRef} className="capx-scroll relative w-full">
               <div
                 className="relative"
                 style={{ width: GRAPH_WIDTH, height: 120, transform: `scale(${graphScale})`, transformOrigin: 'top left' }}
@@ -1484,21 +1493,21 @@ function ExportStage() {
       </div>
 
       <div className="relative flex w-full flex-col items-center gap-4 md:flex-row md:items-start lg:w-[56%]">
-        <div className="capx-stage capx-canvas relative flex min-h-[340px] flex-1 flex-col justify-between overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
+        <div className="capx-stage capx-canvas relative flex min-h-[340px] w-full flex-1 flex-col justify-between overflow-hidden rounded-3xl border border-[var(--rule)] bg-white p-5">
           <WindowBar title="Exporter">
-            <div className="flex items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1.5">
               <span className="flex items-center gap-1 rounded-md border border-[var(--rule)] bg-white px-2 py-1 text-[11px] font-bold text-[var(--ink)]">
-                <Save size={12} className="text-blue-600" /> Save
+                <Save size={12} className="text-blue-600" /> <span className="hidden sm:inline">Save</span>
               </span>
               <span className="flex items-center gap-1 rounded-md border border-[var(--rule)] bg-white px-2 py-1 text-[11px] font-bold text-[var(--ink)]">
-                <Share size={12} className="text-emerald-600" /> Share
+                <Share size={12} className="text-emerald-600" /> <span className="hidden sm:inline">Share</span>
               </span>
               <button
                 type="button"
                 onClick={() => setMenuOpen((open) => !open)}
                 className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
               >
-                <Download size={12} /> Export
+                <Download size={12} /> <span className="hidden sm:inline">Export</span>
               </button>
             </div>
           </WindowBar>

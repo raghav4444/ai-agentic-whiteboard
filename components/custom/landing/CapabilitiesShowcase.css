@@ -298,3 +298,22 @@
   .capx-flow-node { opacity: 1; transform: none; }
   .capx-injected { opacity: 1; transform: none; }
 }
+
+/* Diagram canvas.
+ *
+ * When a diagram cannot shrink any further without its labels becoming
+ * unreadable, the canvas scrolls sideways rather than shrinking the text. The
+ * scrollbar is kept thin and out of the way. */
+.capx-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+.capx-scroll::-webkit-scrollbar { height: 5px; }
+.capx-scroll::-webkit-scrollbar-track { background: transparent; }
+.capx-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--rule);
+}
