@@ -9,7 +9,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { SidebarGroupLabel, SidebarMenuButton } from "@/components/ui/sidebar"
-import { LayoutGrid, Sparkles, Folder, Wand2, Plus } from "lucide-react"
+import { LayoutGrid, Sparkles, Folder, Wand2, Plus } from "@/lib/icons"
 import { usePathname } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { UserButton, useUser } from "@clerk/nextjs"

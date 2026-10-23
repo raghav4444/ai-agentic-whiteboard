@@ -26,7 +26,7 @@ import {
     Sparkles,
     CheckCircle2,
     Loader2
-} from "lucide-react";
+} from "@/lib/icons";
 import FloatingProperties from "./FloatingProperties";
 import { Button } from "@/components/ui/button"
 import AIFloatingSidebar from "./AIFloatingSidebar";

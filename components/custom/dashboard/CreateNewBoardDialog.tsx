@@ -11,7 +11,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog"
 import { Button } from '@/components/ui/button'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2 } from '@/lib/icons'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import axios from 'axios'

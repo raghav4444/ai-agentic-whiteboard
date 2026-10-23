@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from '@/components/ui/button'
-import { Save, Share, ArrowLeft, Loader2 } from 'lucide-react'
+import { Save, Share, ArrowLeft, Loader2 } from '@/lib/icons'
 import { toast } from '@/components/ui/toast'
 import axios from 'axios'
 

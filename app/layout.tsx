@@ -3,13 +3,20 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Provider from './provider';
 import { cn } from "@/lib/utils";
-import { Baloo_2 } from "next/font/google";
+import { Instrument_Serif, Inter } from "next/font/google";
 import { Toaster } from '@/components/ui/toast';
 
-const baloo2 = Baloo_2({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -29,7 +36,7 @@ export default function RootLayout({
 }>) {
   if (!isClerkConfigured) {
     return (
-      <html lang="en" className={cn("font-sans", baloo2.variable)}>
+      <html lang="en" className={cn("font-sans", inter.variable, instrumentSerif.variable)}>
         <body style={{ margin: 0, padding: 0 }}>
           {children}
         </body>
@@ -39,7 +46,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="en" className={cn("font-sans", baloo2.variable)}>
+      <html lang="en" className={cn("font-sans", inter.variable, instrumentSerif.variable)}>
         <body style={{ margin: 0, padding: 0 }}>
           <Provider>{children}</Provider>
           <Toaster />
