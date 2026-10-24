@@ -4,7 +4,6 @@ import React, { useState, useRef } from "react"
 import {
   Sparkles,
   X,
-  PencilRuler,
   Workflow,
   Network,
   Monitor,
@@ -27,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import axios from "axios"
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/data/transform"
 
 interface AIFloatingSidebarProps {
   onClose?: () => void
@@ -34,60 +34,83 @@ interface AIFloatingSidebarProps {
   excalidrawApi?: ExcalidrawImperativeAPI | null
 }
 
+interface GeneratedElement {
+  type?: string
+  x?: number
+  y?: number
+  points?: [number, number][]
+  [key: string]: unknown
+}
+
+function getElementText(element: unknown): string {
+  if (!element || typeof element !== "object") return ""
+  const text = (element as { text?: unknown }).text
+  return typeof text === "string" ? text : ""
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== "object") return fallback
+  const response = (
+    error as {
+      response?: { data?: { detail?: unknown; error?: unknown } }
+    }
+  ).response
+  const detail = response?.data?.detail
+  const message = response?.data?.error
+  if (typeof detail === "string" && detail.trim()) return detail
+  if (typeof message === "string" && message.trim()) return message
+  return fallback
+}
+
 const AiTools = [
   {
-    name: "Generate Diagrams",
-    desc: "Create visual diagrams",
-    icon: PencilRuler,
-    color: "text-blue-600 dark:text-blue-400",
-    bgColor: "bg-blue-50 dark:bg-blue-950/20",
-    activeRing: "ring-blue-500/30 border-blue-500/50 bg-blue-50/40 dark:bg-blue-950/20",
-    presets: ["Microservices Blueprint", "Event-Driven AI Pipeline", "Full-Stack SaaS Architecture"],
-    prompt: `You are an expert visual diagram generation agent.
-Your task is to convert the user's idea into a clear, structured, professional diagram.
-Create a clean visual hierarchy. Use rectangles for concepts, diamonds for decisions, arrows for relationships.
-Keep labels short and readable. Maintain consistent spacing.`,
+    name: "Auto",
+    desc: "Infer the right visual",
+    icon: Sparkles,
+    color: "text-[#a7e8c8]",
+    bgColor: "bg-white/8",
+    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
+    presets: [
+      "SaaS architecture with auth, billing & AI",
+      "Customer onboarding journey",
+      "Marketplace database schema",
+    ],
   },
   {
     name: "Flowchart",
     desc: "Visualize workflows",
     icon: Workflow,
-    color: "text-violet-600 dark:text-violet-400",
-    bgColor: "bg-violet-50 dark:bg-violet-950/20",
-    activeRing: "ring-violet-500/30 border-violet-500/50 bg-violet-50/40 dark:bg-violet-950/20",
+    color: "text-[#a7e8c8]",
+    bgColor: "bg-white/8",
+    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
     presets: ["OAuth2 / JWT Token Refresh", "Multi-Step Checkout & Payment", "Support Ticket Incident Escalation"],
-    prompt: `You are an expert flowchart generation agent.
-Convert description into a flowchart with start/end nodes, process steps, decision diamonds, and labeled arrows.`,
   },
   {
     name: "Architecture",
     desc: "Design system architecture",
     icon: Network,
-    color: "text-orange-600 dark:text-amber-400",
-    bgColor: "bg-orange-50 dark:bg-amber-950/20",
-    activeRing: "ring-orange-500/30 border-orange-500/50 bg-amber-50/40 dark:bg-amber-950/20",
+    color: "text-[#a7e8c8]",
+    bgColor: "bg-white/8",
+    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
     presets: ["Next.js + Neon + Clerk + Redis Stack", "Kubernetes Microservices Mesh", "Kafka Event-Driven Architecture"],
-    prompt: `You are a senior software architect. Convert the description into a clear system architecture diagram. Group clients, API gateway, microservices, databases, caches, and queues.`,
   },
   {
     name: "Web Mockup",
     desc: "Generate web wireframes",
     icon: Monitor,
-    color: "text-cyan-600 dark:text-cyan-400",
-    bgColor: "bg-cyan-50 dark:bg-cyan-950/20",
-    activeRing: "ring-cyan-500/30 border-cyan-500/50 bg-cyan-50/40 dark:bg-cyan-950/20",
+    color: "text-[#a7e8c8]",
+    bgColor: "bg-white/8",
+    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
     presets: ["SaaS Analytics Dashboard", "AI Whiteboard Workspace", "E-Commerce Storefront"],
-    prompt: `You are an expert UI wireframe designer. Create a desktop web wireframe with header, hero, features grid, call to action, and clean layout cards.`,
   },
   {
     name: "Mobile Mockup",
     desc: "Generate app wireframes",
     icon: Smartphone,
-    color: "text-pink-600 dark:text-pink-400",
-    bgColor: "bg-pink-50 dark:bg-pink-950/20",
-    activeRing: "ring-pink-500/30 border-pink-500/50 bg-pink-50/40 dark:bg-pink-950/20",
+    color: "text-[#a7e8c8]",
+    bgColor: "bg-white/8",
+    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
     presets: ["Mobile Auth & 2FA Screen", "Crypto Wallet Portfolio", "Real-Time Chat & Activity Feed"],
-    prompt: `You are an expert mobile app designer. Create a phone frame wireframe with status bar, content cards, buttons, and bottom tab bar.`,
   },
 ]
 
@@ -96,11 +119,16 @@ export default function AIFloatingSidebar({
   onGenerate,
   excalidrawApi,
 }: AIFloatingSidebarProps) {
-  const [selectedTool, setSelectedTool] = useState("Generate Diagrams")
+  const [selectedTool, setSelectedTool] = useState("Auto")
   const [selectedType, setSelectedType] = useState(AiTools[0])
   const [userInput, setUserInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [aiTextResult, setAiTextResult] = useState<string | null>(null)
+  const [resultMeta, setResultMeta] = useState<{
+    title?: string
+    diagramType?: string
+    model?: string
+  } | null>(null)
   const [detailLevel, setDetailLevel] = useState<"standard" | "enterprise">("enterprise")
   const [canvasMode, setCanvasMode] = useState<"replace" | "append">("replace")
   const [copiedText, setCopiedText] = useState(false)
@@ -143,10 +171,10 @@ export default function AIFloatingSidebar({
           y: position.y,
           width: 380,
           height: 180,
-          backgroundColor: "#f5f3ff",
-          strokeColor: "#8b5cf6",
+          backgroundColor: "#f2f8f3",
+          strokeColor: "#2aab70",
           fillStyle: "solid",
-          strokeWidth: 2,
+          strokeWidth: 1.5,
           roughness: 0,
           roundness: { type: 3 },
         },
@@ -155,18 +183,18 @@ export default function AIFloatingSidebar({
           id: "ai-generation-placeholder-t1",
           x: position.x + 24,
           y: position.y + 30,
-          text: "Generating with AI...",
-          fontSize: 18,
-          strokeColor: "#6d28d9",
+          text: "Thinking through the structure...",
+          fontSize: 16,
+          strokeColor: "#065f46",
         },
         {
           type: "text",
           id: "ai-generation-placeholder-t2",
           x: position.x + 24,
-          y: position.y + 70,
-          text: "Synthesizing diagram & layout...",
-          fontSize: 13,
-          strokeColor: "#6b7280",
+          y: position.y + 64,
+          text: "Synthesizing nodes, relationships & layout",
+          fontSize: 12,
+          strokeColor: "#6c726d",
         },
       ])
 
@@ -188,8 +216,6 @@ export default function AIFloatingSidebar({
         .filter((el) => {
           if (el.id.startsWith("ai-generation-placeholder")) return false
           if (placeholderIdsRef.current.includes(el.id)) return false
-          const text = (el as any).text || ""
-          if (text.includes("Generating with") || text.includes("Synthesizing diagram")) return false
           return true
         })
       excalidrawApi.updateScene({ elements })
@@ -211,10 +237,30 @@ export default function AIFloatingSidebar({
 
   const onClickGenerate = async () => {
     if (!userInput.trim() || loading) return
+    if (!excalidrawApi) {
+      toast.add({
+        type: "warning",
+        title: "Canvas is still loading",
+        description: "Wait for the whiteboard to finish opening, then try again.",
+      })
+      return
+    }
 
     const currentAiTool = AiTools.find((tool) => tool.name === selectedTool) || AiTools[0]
+    const requestedCanvasMode = canvasMode
     setLoading(true)
     setAiTextResult(null)
+    setResultMeta(null)
+
+    const boardContext = excalidrawApi
+      .getSceneElements()
+      .filter((el) => !el.isDeleted && !el.id.startsWith("ai-generation-placeholder"))
+      .slice(0, 60)
+      .map((el) => ({
+        type: el.type,
+        text: getElementText(el),
+      }))
+      .filter((item) => item.text.trim().length > 0)
 
     const targetPos = getTargetCanvasPosition()
     await addAiPlaceholder(targetPos)
@@ -223,68 +269,68 @@ export default function AIFloatingSidebar({
       const result = await axios.post("/api/ai", {
         userInput: userInput.trim(),
         type: currentAiTool.name,
-        systemPrompt: currentAiTool.prompt,
-        detailLevel: detailLevel,
+        detailLevel,
+        canvasMode: requestedCanvasMode,
+        ...(boardContext.length > 0 ? { context: boardContext } : {}),
       })
 
       removeAiPlaceholder()
 
-      if (result.data?.elements && Array.isArray(result.data.elements) && excalidrawApi) {
-        const rawElements = result.data.elements
+      if (result.data?.elements && Array.isArray(result.data.elements) && result.data.elements.length > 0) {
+        const rawElements = result.data.elements as GeneratedElement[]
 
-        const nonArrowElements = rawElements.filter((el: any) => el.type !== "arrow")
-        const baseElements = nonArrowElements.length > 0 ? nonArrowElements : rawElements
+        const xValues = rawElements
+          .map((el) => Number(el.x))
+          .filter((value) => Number.isFinite(value))
+        const yValues = rawElements
+          .map((el) => Number(el.y))
+          .filter((value) => Number.isFinite(value))
+        const minElemX = xValues.length > 0 ? Math.min(...xValues) : 0
+        const minElemY = yValues.length > 0 ? Math.min(...yValues) : 0
 
-        const minElemX = Math.min(...baseElements.map((el: any) => el.x ?? 0))
-        const minElemY = Math.min(...baseElements.map((el: any) => el.y ?? 0))
-
-        const normalizedElements = rawElements.map((el: any) => {
-          let currentX = el.x ?? 0
-          let currentY = el.y ?? 0
+        const normalizedElements = rawElements.map((el) => {
+          let currentX = Number(el.x) || 0
+          let currentY = Number(el.y) || 0
           let points = el.points
 
+          // Older payloads sometimes encode the first point in the points array
+          // instead of at x/y. Normalize that before translating the diagram.
           if (el.type === "arrow" && Array.isArray(points) && points.length > 1) {
-            const p0x = points[0][0] ?? 0
-            const p0y = points[0][1] ?? 0
+            const p0x = Number(points[0][0]) || 0
+            const p0y = Number(points[0][1]) || 0
             if (p0x !== 0 || p0y !== 0) {
               currentX += p0x
               currentY += p0y
-              points = points.map((p: any) => [p[0] - p0x, p[1] - p0y])
+              points = points.map(
+                (point) => [point[0] - p0x, point[1] - p0y] as [number, number]
+              )
             }
           }
 
-          const newX = targetPos.x + (currentX - minElemX)
-          const newY = targetPos.y + (currentY - minElemY)
-
           return {
             ...el,
-            x: newX,
-            y: newY,
-            points: points || el.points,
-            seed: Math.floor(Math.random() * 1000000),
-            version: 1,
-            versionNonce: Math.floor(Math.random() * 1000000),
-            isDeleted: false,
-            fillStyle: el.fillStyle || "solid",
-            strokeWidth: el.strokeWidth || 2,
-            roughness: el.roughness ?? 0,
-            roundness: el.roundness || { type: 3 },
-          }
+            x: targetPos.x + (currentX - minElemX),
+            y: targetPos.y + (currentY - minElemY),
+            ...(points ? { points } : {}),
+          } as unknown as ExcalidrawElementSkeleton
         })
 
         const { convertToExcalidrawElements } = await import("@excalidraw/excalidraw")
         const converted = convertToExcalidrawElements(normalizedElements)
 
+        if (converted.length === 0) {
+          throw new Error("The generated diagram had no usable elements.")
+        }
+
         const cleanExisting = excalidrawApi.getSceneElements().filter((e) => {
           if (e.isDeleted) return false
           if (e.id.startsWith("ai-generation-placeholder")) return false
           if (placeholderIdsRef.current.includes(e.id)) return false
-          const text = (e as any).text || ""
-          if (text.includes("Generating with") || text.includes("Synthesizing diagram")) return false
           return true
         })
 
-        const finalSceneElements = canvasMode === "replace" ? converted : [...cleanExisting, ...converted]
+        const finalSceneElements =
+          requestedCanvasMode === "replace" ? converted : [...cleanExisting, ...converted]
 
         excalidrawApi.updateScene({
           elements: finalSceneElements,
@@ -294,40 +340,62 @@ export default function AIFloatingSidebar({
           try {
             excalidrawApi.scrollToContent(converted, {
               fitToViewport: true,
-              viewportZoomFactor: 0.8,
+              viewportZoomFactor: 0.82,
             })
           } catch (e) {
             console.error(e)
           }
         }, 60)
 
-        if (result.data?.summary) {
-          setAiTextResult(result.data.summary)
-        }
+        const summary =
+          typeof result.data.summary === "string" && result.data.summary.trim()
+            ? result.data.summary
+            : null
+        if (summary) setAiTextResult(summary)
+        setResultMeta({
+          title: result.data.title,
+          diagramType: result.data.diagramType,
+          model: result.data.model,
+        })
 
         toast.add({
           type: "success",
-          title: "Detailed Diagram Created",
-          description: `${converted.length} elements placed on canvas with architectural specification.`,
+          title: `${result.data.diagramType || "Diagram"} created`,
+          description: `${converted.length} elements · ${result.data.title || "Placed on the canvas"}`,
         })
 
+        if (Array.isArray(result.data.warnings) && result.data.warnings.length > 0) {
+          toast.add({
+            type: "info",
+            title: "Layout note",
+            description: result.data.warnings[0],
+          })
+        }
+
         if (onGenerate) {
-          onGenerate(selectedTool, userInput)
+          try {
+            onGenerate(selectedTool, userInput)
+          } catch (callbackError) {
+            console.error(callbackError)
+          }
         }
       } else {
         toast.add({
           type: "error",
           title: "Generation Failed",
-          description: "No elements were produced.",
+          description:
+            result.data?.detail ||
+            result.data?.error ||
+            "The assistant returned no canvas elements.",
         })
       }
-    } catch (error: any) {
+    } catch (error) {
       removeAiPlaceholder()
       console.error(error)
       toast.add({
         type: "error",
         title: "AI Generation Error",
-        description: error?.response?.data?.error || "Could not generate diagram.",
+        description: getApiErrorMessage(error, "Could not generate the diagram."),
       })
     } finally {
       setLoading(false)
@@ -349,11 +417,12 @@ export default function AIFloatingSidebar({
 
     setLoading(true)
     setAiTextResult(null)
+    setResultMeta(null)
 
     try {
-      const summaryContext = currentElements.map((el) => ({
+      const summaryContext = currentElements.slice(0, 80).map((el) => ({
         type: el.type,
-        text: (el as any).text || "",
+        text: getElementText(el),
         x: Math.round(el.x),
         y: Math.round(el.y),
       }))
@@ -370,13 +439,19 @@ export default function AIFloatingSidebar({
           type: "success",
           title: actionType === "explain" ? "Explanation Ready" : "Ideas Generated",
         })
+      } else {
+        toast.add({
+          type: "error",
+          title: "Action Failed",
+          description: result.data?.detail || result.data?.error || "The AI returned no text.",
+        })
       }
     } catch (error) {
       console.error(error)
       toast.add({
         type: "error",
         title: "Action Failed",
-        description: "Unable to complete AI request.",
+        description: getApiErrorMessage(error, "Unable to complete the AI request."),
       })
     } finally {
       setLoading(false)
@@ -385,14 +460,22 @@ export default function AIFloatingSidebar({
 
   const handleCopySummary = async () => {
     if (!aiTextResult) return
-    await navigator.clipboard.writeText(aiTextResult)
-    setCopiedText(true)
-    toast.add({
-      type: "success",
-      title: "Architecture Summary Copied",
-      description: "Copied detailed output to clipboard.",
-    })
-    setTimeout(() => setCopiedText(false), 2000)
+    try {
+      await navigator.clipboard.writeText(aiTextResult)
+      setCopiedText(true)
+      toast.add({
+        type: "success",
+        title: "AI notes copied",
+        description: "Copied the diagram explanation to the clipboard.",
+      })
+      setTimeout(() => setCopiedText(false), 2000)
+    } catch {
+      toast.add({
+        type: "error",
+        title: "Copy failed",
+        description: "The browser blocked clipboard access.",
+      })
+    }
   }
 
   const handleSendToSmartDoc = () => {
@@ -420,115 +503,132 @@ export default function AIFloatingSidebar({
 
   return (
     <div
+      data-glass-reactive
       className="
-        fixed bottom-16 right-5 z-50
-        w-full max-w-[370px]
-        overflow-hidden rounded-2xl
-        border border-slate-200/90 dark:border-slate-800
-        bg-white/95 dark:bg-slate-900/95
-        shadow-[0_20px_50px_-10px_rgba(0,0,0,0.18)]
-        backdrop-blur-xl transition-all duration-300 max-h-[90vh] flex flex-col
+        glass-dark fixed bottom-20 right-4 z-50
+        flex max-h-[min(78svh,760px)] w-[calc(100%-2rem)] max-w-[400px] flex-col
+        overflow-hidden overscroll-contain !rounded-[1.8rem] text-[#f7f4eb]
+        animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-3 duration-200
+        sm:bottom-24
       "
     >
-      <div className="border-b border-slate-100 dark:border-slate-800 px-4 py-3 shrink-0">
+      <div className="relative shrink-0 border-b border-white/10 px-4 py-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5ee0a4]/25 bg-[#5ee0a4]/10 text-[#a7e8c8] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
               <Sparkles className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-xs font-semibold text-slate-900 dark:text-slate-100 leading-none">
-                AI Whiteboard Assistant
-              </h2>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Gemini 2.0 Flash Engine
+              <div className="flex items-center gap-2">
+                <h2 className="text-[13px] font-semibold leading-none tracking-[-0.015em] text-[#f7f4eb]">
+                  AI assistant
+                </h2>
+                <span className="glass-chip-dark mono-label inline-flex h-4 items-center gap-1 rounded-full px-1.5 text-[8.5px] text-[#a7e8c8]">
+                  <span className="size-1 rounded-full bg-[#5ee0a4]" />
+                  Live
+                </span>
+              </div>
+              <p className="mono-label mt-1.5 text-white/42">
+                Gemini · canvas-native
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 cursor-pointer"
+            aria-label="Close AI assistant"
+            className="flex size-8 cursor-pointer items-center justify-center rounded-full text-white/45 transition-[background-color,color,transform] hover:bg-white/10 hover:text-white active:scale-[0.92] active:bg-white/15"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="overflow-y-auto p-4 space-y-3 flex-1">
-        <div className="flex items-center gap-2 pb-1">
+      <div className="no-scrollbar flex-1 space-y-5 overflow-y-auto p-4">
+        <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant="outline"
-            className="h-7 text-[11px] gap-1 flex-1"
+            variant="onDark"
+            className="h-9 flex-1 gap-1.5 px-2 text-[11px]"
             onClick={() => handleQuickAction("explain")}
             disabled={loading}
           >
-            <HelpCircle className="h-3 w-3 text-indigo-500" />
-            Explain Board
+            <HelpCircle className="h-3.5 w-3.5 text-[#a7e8c8]" />
+            Explain board
           </Button>
           <Button
             size="sm"
-            variant="outline"
-            className="h-7 text-[11px] gap-1 flex-1"
+            variant="onDark"
+            className="h-9 flex-1 gap-1.5 px-2 text-[11px]"
             onClick={() => handleQuickAction("brainstorm")}
             disabled={loading}
           >
-            <Lightbulb className="h-3 w-3 text-amber-500" />
+            <Lightbulb className="h-3.5 w-3.5 text-[#e5c477]" />
             Brainstorm
           </Button>
         </div>
 
         {aiTextResult && (
-          <div className="p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-800/60 text-xs text-slate-800 dark:text-slate-200 relative shadow-xs">
-            <div className="flex items-center justify-between font-semibold mb-1.5 text-indigo-700 dark:text-indigo-300">
-              <span className="flex items-center gap-1.5 text-[11px]">
-                <Sparkles className="h-3 w-3 text-indigo-500" />
-                Detailed Architecture Specification
+          <div className="glass-row relative rounded-2xl border-[#5ee0a4]/18 p-3.5 text-xs text-white/70">
+            <div className="mb-2 flex items-center justify-between font-semibold text-[#a7e8c8]">
+              <span
+                className="flex items-center gap-1.5 text-[10.5px]"
+                title={resultMeta?.model ? `Generated with ${resultMeta.model}` : undefined}
+              >
+                <Sparkles className="h-3 w-3 text-[#5ee0a4]" />
+                {resultMeta?.diagramType || "AI notes"}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={handleCopySummary}
-                  title="Copy breakdown"
-                  className="p-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-slate-500 hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-300 cursor-pointer"
+                  title="Copy note"
+                  className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/40 transition-[background-color,color,transform] hover:bg-white/10 hover:text-[#a7e8c8] active:scale-[0.9] active:bg-white/15"
                 >
-                  {copiedText ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                  {copiedText ? <Check className="h-3 w-3 text-[#5ee0a4]" /> : <Copy className="h-3 w-3" />}
                 </button>
                 <button
                   type="button"
                   onClick={handleSendToSmartDoc}
                   title="Insert into SmartDoc"
-                  className="p-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-slate-500 hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-300 cursor-pointer"
+                  className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/40 transition-[background-color,color,transform] hover:bg-white/10 hover:text-[#a7e8c8] active:scale-[0.9] active:bg-white/15"
                 >
                   <FileText className="h-3 w-3" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAiTextResult(null)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-[10px] ml-1 cursor-pointer"
+                  onClick={() => {
+                    setAiTextResult(null)
+                    setResultMeta(null)
+                  }}
+                  className="ml-1 cursor-pointer text-[10px] text-white/35 transition-colors hover:text-white/80 active:text-white"
                 >
                   Clear
                 </button>
               </div>
             </div>
-            <div className="whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed text-[11px] font-normal text-slate-700 dark:text-slate-300 pr-1">
+            {resultMeta?.title && (
+              <p className="mb-1.5 text-[10px] font-medium text-white/38">
+                {resultMeta.title}
+              </p>
+            )}
+            <div className="no-scrollbar max-h-52 overflow-y-auto whitespace-pre-wrap pr-1 text-[11.5px] font-normal leading-relaxed text-white/62">
               {aiTextResult}
             </div>
           </div>
         )}
 
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Select Generation Mode
+          <div className="mb-2.5 flex items-center justify-between px-0.5">
+            <h3 className="mono-label text-white/42">
+              Visual mode
             </h3>
-            <span className="text-[10px] text-slate-400">
-              {AiTools.length} tools
+            <span className="mono-label text-white/24">
+              {AiTools.length} modes
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             {AiTools.map((tool, index) => {
               const Icon = tool.icon
               const isSelected = selectedTool === tool.name
@@ -544,31 +644,31 @@ export default function AIFloatingSidebar({
                     setSelectedType(tool)
                   }}
                   className={`
-                    group relative flex items-center gap-2
-                    rounded-xl border p-2 text-left transition-all cursor-pointer
+                    group relative flex min-h-[3.5rem] items-center gap-2.5
+                    rounded-xl border p-2.5 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[var(--ease-out)] cursor-pointer active:scale-[0.985]
                     ${isLastOdd ? "col-span-2" : "col-span-1"}
                     ${
                       isSelected
-                        ? `ring-1 ${tool.activeRing} shadow-sm`
-                        : "border-slate-200/60 bg-slate-50/50 hover:bg-slate-100/50 dark:border-slate-800 dark:bg-slate-800/30"
+                        ? "border-white/20 bg-white/11 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-[#5ee0a4]/15"
+                        : "border-white/8 bg-white/[0.035] hover:border-white/15 hover:bg-white/[0.075]"
                     }
                   `}
                 >
                   {isSelected && (
-                    <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                    <span className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-[#5ee0a4]" />
                   )}
 
                   <div
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tool.bgColor} ${tool.color}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border border-white/10 ${tool.bgColor} ${tool.color}`}
                   >
                     <Icon className="h-3.5 w-3.5" />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] font-semibold text-slate-800 dark:text-slate-200 leading-none">
+                    <p className="truncate text-[11.5px] font-semibold leading-none tracking-[-0.01em] text-white/88">
                       {tool.name}
                     </p>
-                    <p className="truncate text-[9px] text-slate-400 mt-0.5">
+                    <p className="mt-1.5 truncate text-[10px] text-white/38">
                       {tool.desc}
                     </p>
                   </div>
@@ -580,17 +680,17 @@ export default function AIFloatingSidebar({
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Layers className="h-3 w-3 text-indigo-500" /> Output Depth
+            <span className="mono-label flex items-center gap-1.5 text-white/42">
+              <Layers className="h-3 w-3 text-[#a7e8c8]" /> Output depth
             </span>
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px]">
+            <div className="glass-segmented-dark flex items-center gap-0.5 p-1 text-[10px]">
               <button
                 type="button"
                 onClick={() => setDetailLevel("standard")}
-                className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                   detailLevel === "standard"
-                    ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-xs font-semibold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
+                    : "text-white/45 hover:text-white/85"
                 }`}
               >
                 Standard
@@ -598,30 +698,30 @@ export default function AIFloatingSidebar({
               <button
                 type="button"
                 onClick={() => setDetailLevel("enterprise")}
-                className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                   detailLevel === "enterprise"
-                    ? "bg-indigo-600 text-white shadow-xs font-semibold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
+                    : "text-white/45 hover:text-white/85"
                 }`}
               >
-                Deep / Detailed
+                Detailed
               </button>
             </div>
           </div>
 
           <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <RotateCcw className="h-3 w-3 text-indigo-500" /> Canvas Mode
+            <span className="mono-label flex items-center gap-1.5 text-white/42">
+              <RotateCcw className="h-3 w-3 text-[#a7e8c8]" /> Canvas mode
             </span>
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px]">
+              <div className="glass-segmented-dark flex items-center gap-0.5 p-1 text-[10px]">
                 <button
                   type="button"
                   onClick={() => setCanvasMode("replace")}
-                  className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                  className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                     canvasMode === "replace"
-                      ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-xs font-semibold"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
+                      : "text-white/45 hover:text-white/85"
                   }`}
                 >
                   Replace
@@ -629,10 +729,10 @@ export default function AIFloatingSidebar({
                 <button
                   type="button"
                   onClick={() => setCanvasMode("append")}
-                  className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                  className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                     canvasMode === "append"
-                      ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-xs font-semibold"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
+                      : "text-white/45 hover:text-white/85"
                   }`}
                 >
                   Append
@@ -642,24 +742,22 @@ export default function AIFloatingSidebar({
                 type="button"
                 onClick={handleClearCanvas}
                 title="Clear whiteboard canvas"
-                className="flex items-center gap-1 text-[10px] text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100/60 px-1.5 py-0.5 rounded-md transition cursor-pointer"
+                className="flex cursor-pointer items-center gap-1 rounded-full border border-rose-300/15 bg-rose-500/10 px-2.5 py-1.5 text-[10px] font-semibold text-rose-300/80 transition-[background-color,color,transform] hover:bg-rose-500/16 hover:text-rose-200 active:scale-[0.97]"
               >
                 <Trash2 className="h-2.5 w-2.5" /> Clear
               </button>
             </div>
           </div>
 
-          <div className="mb-2 flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
+          <div className="no-scrollbar mb-2 flex items-center gap-1 overflow-x-auto pb-1">
             {currentToolData.presets.map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={() => setUserInput(preset)}
                 className="
-                  whitespace-nowrap rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5
-                  text-[9px] font-medium text-slate-600 transition-colors cursor-pointer
-                  hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-600
-                  dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300
+                  glass-chip-dark h-7 cursor-pointer whitespace-nowrap px-2.5 text-[10px] font-medium
+                  transition-[border-color,color,transform] hover:border-[#5ee0a4]/30 hover:text-[#a7e8c8] active:scale-[0.97]
                 "
               >
                 + {preset}
@@ -667,25 +765,26 @@ export default function AIFloatingSidebar({
             ))}
           </div>
 
-          <div className="relative rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus-within:border-indigo-500/50 focus-within:bg-white focus-within:ring-1 focus-within:ring-indigo-500/20">
+          <div className="relative rounded-2xl border border-white/12 bg-black/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-[border-color,background-color,box-shadow] duration-150 focus-within:border-[#5ee0a4]/35 focus-within:bg-black/26 focus-within:ring-2 focus-within:ring-[#5ee0a4]/10">
             <Textarea
               value={userInput}
               onChange={(event) => setUserInput(event.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe your diagram, architecture, or workflow..."
+              maxLength={500}
+              placeholder="Describe what you want to understand, map, or build..."
               className="
-                min-h-[90px] resize-none border-0 bg-transparent
-                px-3 py-2 text-xs text-slate-800 dark:text-slate-100
-                placeholder:text-slate-400 shadow-none focus-visible:ring-0
+                min-h-[104px] resize-none border-0 bg-transparent
+                px-3.5 py-3 text-[12.5px] leading-relaxed text-white/88 shadow-none
+                placeholder:text-white/32 focus-visible:ring-0
               "
             />
 
-            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[9px] text-slate-400">
-                <Wand2 className="h-2.5 w-2.5 text-indigo-500" />
-                <span>Gemini Powered</span>
+            <div className="flex items-center justify-between border-t border-white/8 px-3 py-2">
+              <div className="mono-label flex items-center gap-1.5 text-white/32">
+                <Wand2 className="h-2.5 w-2.5 text-[#a7e8c8]" />
+                <span>Gemini powered</span>
               </div>
-              <span className="text-[9px] font-mono text-slate-400">
+              <span className="mono-label text-white/25">
                 {userInput.length}/500
               </span>
             </div>
@@ -693,17 +792,13 @@ export default function AIFloatingSidebar({
 
           <Button
             size="sm"
+            variant="inverse"
             onClick={onClickGenerate}
-            disabled={loading || !userInput.trim()}
-            className="
-              mt-2.5 h-8 w-full gap-1.5 rounded-lg
-              bg-indigo-600 text-xs font-medium text-white
-              shadow-sm hover:bg-indigo-700 active:scale-[0.99]
-              disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer
-            "
+            disabled={loading || !userInput.trim() || !excalidrawApi}
+            className="mt-3 h-10 w-full cursor-pointer gap-2 px-4 text-[12px]"
           >
             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Generate Elements
+            {selectedTool === "Auto" ? "Create visual" : "Generate elements"}
             <ArrowUp size={14} className="ml-auto" />
           </Button>
         </div>

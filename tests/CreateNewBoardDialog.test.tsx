@@ -30,33 +30,33 @@ describe("CreateNewBoardDialog", () => {
   it("does not navigate when workspace creation fails", async () => {
     render(<CreateNewBoardDialog />)
 
-    fireEvent.click(screen.getByRole("button", { name: /create new board/i }))
+    fireEvent.click(screen.getByRole("button", { name: /new board/i }))
 
     fireEvent.change(
-      await screen.findByPlaceholderText("e.g. E-Commerce Microservices Architecture"),
+      await screen.findByPlaceholderText("e.g. Realtime collaboration architecture"),
       {
         target: { value: "Failed Workspace" },
       }
     )
 
-    fireEvent.click(screen.getByRole("button", { name: /^Create Workspace$/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^Create board$/ }))
 
     await waitFor(() => expect(axios.post).toHaveBeenCalled())
 
     // The board was never created, so there is nowhere to navigate to.
     expect(push).not.toHaveBeenCalled()
     // The action must be retryable rather than left disabled.
-    expect(screen.getByRole("button", { name: /^Create Workspace$/ })).not.toBeDisabled()
+    expect(screen.getByRole("button", { name: /^Create board$/ })).not.toBeDisabled()
   })
 
   it("does not create a board with an empty name", async () => {
     render(<CreateNewBoardDialog />)
 
-    fireEvent.click(screen.getByRole("button", { name: /create new board/i }))
-    await screen.findByPlaceholderText("e.g. E-Commerce Microservices Architecture")
+    fireEvent.click(screen.getByRole("button", { name: /new board/i }))
+    await screen.findByPlaceholderText("e.g. Realtime collaboration architecture")
 
     // The create action stays disabled until a name is entered.
-    expect(screen.getByRole("button", { name: /^Create Workspace$/ })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /^Create board$/ })).toBeDisabled()
     expect(axios.post).not.toHaveBeenCalled()
   })
 })

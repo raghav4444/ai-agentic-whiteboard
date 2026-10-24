@@ -19,9 +19,12 @@ import { useRouter } from 'next/navigation'
 
 interface Props {
     onBoardCreated?: () => void;
+    buttonClassName?: string;
+    buttonLabel?: string;
+    buttonVariant?: "default" | "inverse" | "onDark" | "secondary";
 }
 
-function CreateNewBoardDialog({ onBoardCreated }: Props) {
+function CreateNewBoardDialog({ onBoardCreated, buttonClassName, buttonLabel, buttonVariant = "default" }: Props) {
     const [workspaceName, setWorkspaceName] = useState("");
     const [loading, setLoading] = useState(false);
     const [dialog, setDialog] = useState(false);
@@ -31,8 +34,8 @@ function CreateNewBoardDialog({ onBoardCreated }: Props) {
         if (workspaceName.trim() === "" || workspaceName.length > 50) {
             toast.add({
                 type: 'error',
-                title: 'Invalid Workspace Name',
-                description: 'Please enter a valid workspace name (1-50 characters)'
+                title: 'Invalid workspace name',
+                description: 'Please enter a name between 1 and 50 characters.'
             })
             return;
         }
@@ -47,7 +50,7 @@ function CreateNewBoardDialog({ onBoardCreated }: Props) {
 
             toast.add({
                 type: 'success',
-                title: 'New Workspace Created',
+                title: 'Board created',
             });
 
             setDialog(false);
@@ -60,8 +63,8 @@ function CreateNewBoardDialog({ onBoardCreated }: Props) {
             console.error(error);
             toast.add({
                 type: 'error',
-                title: 'Creation Failed',
-                description: 'Could not create workspace. Please check database configuration.'
+                title: 'Creation failed',
+                description: 'Could not create the board. Please check the database configuration.'
             });
         } finally {
             setLoading(false);
@@ -71,22 +74,28 @@ function CreateNewBoardDialog({ onBoardCreated }: Props) {
     return (
         <Dialog open={dialog} onOpenChange={setDialog}>
             <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm">
-                    <Plus size={16} /> Create New Board
+                <Button variant={buttonVariant} className={buttonClassName ?? "w-full gap-2 sm:w-auto"}>
+                    <Plus size={15} /> {buttonLabel ?? "New board"}
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="text-base font-bold">New Whiteboard Workspace</DialogTitle>
+                    <p className="mono-label text-[#2aab70]">New canvas</p>
+                    <DialogTitle className="mt-2 text-[24px] leading-[1.05] tracking-[-0.045em]">
+                        Give the idea<br />
+                        <span className="font-editorial text-[#065f46]">a place to land.</span>
+                    </DialogTitle>
                 </DialogHeader>
-                <div className="py-2">
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                        Workspace Name
+                <div className="py-1">
+                    <label className="text-[11px] font-semibold text-[#6c726d]">
+                        Board name
                     </label>
                     <Input
-                        placeholder="e.g. E-Commerce Microservices Architecture"
-                        className="mt-1.5 text-xs"
+                        placeholder="e.g. Realtime collaboration architecture"
+                        className="mt-2"
                         value={workspaceName}
+                        autoFocus
+                        maxLength={50}
                         onChange={(e) => setWorkspaceName(e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -94,19 +103,21 @@ function CreateNewBoardDialog({ onBoardCreated }: Props) {
                             }
                         }}
                     />
+                    <p className="mt-2.5 text-[11px] leading-relaxed text-[#6c726d]/75">
+                        You can rename it later. Every board starts with an infinite canvas, an AI assistant and SmartDoc.
+                    </p>
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline" size="sm">Cancel</Button>
+                        <Button variant="outline">Cancel</Button>
                     </DialogClose>
                     <Button
-                        size="sm"
                         disabled={workspaceName.trim() === "" || loading}
                         onClick={handleCreateBoard}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer gap-1.5"
+                        className="gap-1.5"
                     >
                         {loading && <Loader2 size={14} className="animate-spin" />}
-                        Create Workspace
+                        Create board
                     </Button>
                 </DialogFooter>
             </DialogContent>

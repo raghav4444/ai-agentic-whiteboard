@@ -9,7 +9,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { SidebarGroupLabel, SidebarMenuButton } from "@/components/ui/sidebar"
-import { LayoutGrid, Sparkles, Folder, Wand2, Plus } from "@/lib/icons"
+import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin } from "@/lib/icons"
 import { usePathname } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { UserButton, useUser } from "@clerk/nextjs"
@@ -24,13 +24,18 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 
 interface ProjectItem {
     id: number;
     projectId: string;
     projectName: string;
 }
+
+const SOCIAL_LINKS = {
+    discord: "https://discord.gg/a3FzwUmCQ",
+    github: "https://github.com/raghav4444",
+    linkedin: "https://www.linkedin.com/in/raghvendra-singh4444/",
+} as const;
 
 export function AppSidebar() {
     const path = usePathname();
@@ -58,80 +63,115 @@ export function AppSidebar() {
     const progressValue = Math.min(100, Math.round((boardCount / maxFreeBoards) * 100));
 
     return (
-        <Sidebar className="border-r border-slate-200 dark:border-slate-800">
-            <SidebarHeader className="p-4 border-b border-slate-100 dark:border-slate-800/80">
-                <Link href="/dashboard" className="flex items-center gap-3">
-                    <Image src="/logo.svg" alt="Logo" width={32} height={32} />
-                    <div>
-                        <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-none">
-                            ScribeBoard
+        <Sidebar
+            variant="floating"
+            collapsible="offcanvas"
+            className="glass-sidebar"
+            data-glass-reactive
+        >
+            <SidebarHeader className="px-4 pt-4 pb-3">
+                <Link
+                    href="/dashboard"
+                    className="group -m-1.5 flex items-center gap-3 rounded-2xl p-1.5 transition-[background-color,transform] duration-150 hover:bg-white/35 active:scale-[0.99]"
+                >
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-[15px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,253,247,0.9),rgba(255,250,240,0.5))] shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_22px_-14px_rgba(21,23,20,0.45)] backdrop-blur-md">
+                        <Image src="/logo.svg" alt="ScribeBoard" width={25} height={25} />
+                    </span>
+                    <div className="min-w-0">
+                        <h1 className="truncate text-[15px] font-extrabold leading-none tracking-[-0.05em] text-[#151714]">
+                            Scribe<span className="text-[#2aab70]">Board</span>
                         </h1>
-                        <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
-                            AI Whiteboard
+                        <span className="mono-label mt-1.5 block text-[#6c726d]/70">
+                            Agentic canvas
                         </span>
                     </div>
                 </Link>
             </SidebarHeader>
 
-            <SidebarContent className="p-3">
-                <SidebarGroup>
-                    <CreateNewBoardDialog />
+            <SidebarContent className="px-3 pb-2">
+                <SidebarGroup className="p-0">
+                    <CreateNewBoardDialog
+                        buttonClassName="h-11 w-full justify-center gap-2 px-4 text-[12.5px]"
+                        buttonLabel="New board"
+                    />
+                    <p className="mt-2.5 px-1 text-center text-[11px] leading-relaxed text-[#6c726d]/65">
+                        A blank canvas with an AI copilot and living spec.
+                    </p>
                 </SidebarGroup>
 
-                <SidebarGroup className="mt-2">
-                    <SidebarGroupLabel className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-                        Navigation
+                <SidebarGroup className="mt-6 p-0">
+                    <SidebarGroupLabel className="mono-label px-2 text-[#6c726d]/65">
+                        Workspace
                     </SidebarGroupLabel>
-                    <Link href="/dashboard">
-                        <SidebarMenuButton className="p-2.5 mt-1 cursor-pointer" isActive={path === "/dashboard"}>
-                            <LayoutGrid size={15} />
-                            <span className="text-xs font-medium">All Boards</span>
-                        </SidebarMenuButton>
-                    </Link>
-
-                    <Dialog open={aiModalOpen} onOpenChange={setAiModalOpen}>
-                        <DialogTrigger asChild>
-                            <SidebarMenuButton className="p-2.5 mt-1 cursor-pointer" isActive={false}>
-                                <Sparkles size={15} className="text-indigo-500" />
-                                <span className="text-xs font-medium">AI Diagram Guide</span>
+                    <div className="mt-2 space-y-1">
+                        <Link href="/dashboard" className="block">
+                            <SidebarMenuButton
+                                className="glass-nav-item h-10 cursor-pointer px-3"
+                                isActive={path === "/dashboard"}
+                            >
+                                <LayoutGrid size={16} />
+                                <span className="text-[12.5px] font-semibold">All boards</span>
+                                {path === "/dashboard" && (
+                                    <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-[#2aab70]/10">
+                                        <span className="size-1.5 rounded-full bg-[#2aab70]" />
+                                    </span>
+                                )}
                             </SidebarMenuButton>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                            <DialogHeader>
-                                <DialogTitle className="text-base font-bold flex items-center gap-2">
-                                    <Wand2 size={16} className="text-indigo-600" />
-                                    AI Whiteboard Generators
-                                </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-3 py-2 text-xs">
-                                <p className="text-slate-500">
-                                    Inside any whiteboard workspace, click the floating <strong>AI Assistant</strong> button to generate:
-                                </p>
-                                <div className="grid grid-cols-1 gap-2">
-                                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                                        <div className="font-semibold text-indigo-600 dark:text-indigo-400">Flowcharts & Workflows</div>
-                                        <div className="text-[11px] text-slate-500">Authentication, checkout steps, onboarding flows with decision logic.</div>
-                                    </div>
-                                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                                        <div className="font-semibold text-indigo-600 dark:text-indigo-400">System Architecture</div>
-                                        <div className="text-[11px] text-slate-500">Microservices, database topologies, cloud infrastructures & API gateways.</div>
-                                    </div>
-                                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                                        <div className="font-semibold text-indigo-600 dark:text-indigo-400">UI Wireframes</div>
-                                        <div className="text-[11px] text-slate-500">Desktop SaaS landing wireframes and mobile screen layouts.</div>
+                        </Link>
+
+                        <Dialog open={aiModalOpen} onOpenChange={setAiModalOpen}>
+                            <DialogTrigger asChild>
+                                <SidebarMenuButton className="glass-nav-item h-10 cursor-pointer px-3" isActive={false}>
+                                    <Sparkles size={16} />
+                                    <span className="text-[12.5px] font-medium">AI field guide</span>
+                                    <span className="mono-label ml-auto text-[#6c726d]/35">?</span>
+                                </SidebarMenuButton>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-3 text-[20px] tracking-[-0.035em]">
+                                        <span className="flex size-9 items-center justify-center rounded-full border border-[#2aab70]/20 bg-[#2aab70]/10 text-[#065f46]">
+                                            <Wand2 size={16} />
+                                        </span>
+                                        A quieter way to generate
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-3 py-1 text-xs">
+                                    <p className="text-[13px] leading-relaxed text-[#6c726d]">
+                                        Open any board and use the floating <strong className="font-semibold text-[#151714]">AI assistant</strong> to turn a written idea into a diagram you can edit.
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {[
+                                            ["Flowcharts", "Onboarding, checkout, approvals — decision logic kept readable."],
+                                            ["System architecture", "Services, queues, data stores and the boundaries between them."],
+                                            ["Interface sketches", "Desktop and mobile wireframes that stay editable on the canvas."],
+                                        ].map(([title, description], index) => (
+                                            <div key={title} className="glass-panel-soft flex gap-3 p-3.5">
+                                                <span className="mono-label mt-0.5 text-[#2aab70]">0{index + 1}</span>
+                                                <div>
+                                                    <div className="text-[12px] font-semibold text-[#151714]">{title}</div>
+                                                    <div className="mt-1 text-[11px] leading-relaxed text-[#6c726d]">{description}</div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </SidebarGroup>
 
                 {projects.length > 0 && (
-                    <SidebarGroup className="mt-2">
-                        <SidebarGroupLabel className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-                            Recent Boards
-                        </SidebarGroupLabel>
-                        <div className="space-y-0.5 mt-1 max-h-52 overflow-y-auto no-scrollbar">
+                    <SidebarGroup className="mt-6 p-0">
+                        <div className="flex items-center justify-between px-2">
+                            <SidebarGroupLabel className="mono-label h-auto p-0 text-[#6c726d]/65">
+                                Recent
+                            </SidebarGroupLabel>
+                            <span className="mono-label rounded-full border border-[#151714]/7 bg-white/30 px-2 py-0.5 text-[#6c726d]/45">
+                                {projects.length}
+                            </span>
+                        </div>
+                        <div className="no-scrollbar mt-2 max-h-56 space-y-1 overflow-y-auto">
                             {projects.slice(0, 6).map((proj) => (
                                 <Link
                                     key={proj.projectId}
@@ -139,11 +179,11 @@ export function AppSidebar() {
                                     className="block"
                                 >
                                     <SidebarMenuButton
-                                        className="p-2 cursor-pointer h-8 text-xs"
+                                        className="glass-nav-item h-9 cursor-pointer px-2.5"
                                         isActive={path === `/workspace/${proj.projectId}`}
                                     >
-                                        <Folder size={13} className="text-slate-400 shrink-0" />
-                                        <span className="truncate text-[11px]">{proj.projectName}</span>
+                                        <Folder size={14} className="shrink-0 opacity-55" />
+                                        <span className="truncate text-[11.5px] font-medium">{proj.projectName}</span>
                                     </SidebarMenuButton>
                                 </Link>
                             ))}
@@ -152,32 +192,86 @@ export function AppSidebar() {
                 )}
             </SidebarContent>
 
-            <SidebarFooter className="p-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                <div className="p-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
-                    <div className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-300 font-medium mb-1.5">
-                        <span>{boardCount} of {maxFreeBoards} boards</span>
-                        <span className="text-[10px] text-slate-400">{progressValue}%</span>
-                    </div>
-                    <Progress value={progressValue} className="h-1.5" />
-                    <div className="flex items-center justify-between mt-2 text-[10px] text-slate-500">
-                        <span>AI Engine: Gemini 2.0 Flash</span>
-                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                            {userDetail?.user?.credits ?? 3} Credits
+            <SidebarFooter className="gap-2 border-t border-[#151714]/7 p-3">
+                <div className="glass-panel-soft p-3.5">
+                    <div className="flex items-center justify-between">
+                        <span className="mono-label text-[#6c726d]/70">Free plan</span>
+                        <span className="mono-label text-[#6c726d]/45">
+                            {boardCount}/{maxFreeBoards}
                         </span>
+                    </div>
+                    <div className="mt-2.5 flex items-baseline justify-between gap-2">
+                        <span className="text-[12.5px] font-semibold tracking-[-0.02em] text-[#151714]">
+                            {maxFreeBoards - boardCount} boards left
+                        </span>
+                        <Link
+                            href="/dashboard"
+                            className="flex items-center gap-0.5 text-[10.5px] font-semibold text-[#065f46] transition-colors hover:text-[#2aab70]"
+                        >
+                            View <ArrowUpRight size={11} />
+                        </Link>
+                    </div>
+                    <Progress value={progressValue} className="mt-3 h-1.5" />
+                    <div className="mt-3 flex items-center justify-between border-t border-[#151714]/7 pt-2.5">
+                        <span className="flex items-center gap-1.5 text-[10.5px] text-[#6c726d]">
+                            <Zap size={11} className="text-[#b07b22]" />
+                            {userDetail?.user?.credits ?? 3} AI credits
+                        </span>
+                        <span className="mono-label text-[#6c726d]/45">Gemini</span>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100/60 dark:bg-slate-800/60">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <UserButton />
-                        <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate leading-none">
-                                {user?.fullName || "User"}
-                            </p>
-                            <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                                {user?.primaryEmailAddress?.emailAddress}
-                            </p>
-                        </div>
+                <div className="glass-panel-soft mt-0.5 flex items-center gap-2.5 rounded-[14px] px-2.5 py-2">
+                    <UserButton />
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11.5px] font-semibold leading-none text-[#151714]">
+                            {user?.fullName || "User"}
+                        </p>
+                        <p className="mt-1 truncate text-[10px] text-[#6c726d]/75">
+                            {user?.primaryEmailAddress?.emailAddress}
+                        </p>
+                    </div>
+                    <span className="size-1.5 rounded-full bg-[#2aab70]/70" />
+                </div>
+
+                <div className="mt-1 flex items-center justify-between px-0.5">
+                    <a
+                        href={SOCIAL_LINKS.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Follow on LinkedIn"
+                        aria-label="Follow on LinkedIn"
+                        className="group inline-flex min-h-10 items-center gap-1.5 rounded-full px-2 text-[10.5px] font-semibold text-[#6c726d] transition-[color,transform] duration-150 hover:text-[#065f46] active:scale-[0.97]"
+                    >
+                        <Linkedin size={13} className="text-[#2aab70]" />
+                        <span>Follow us</span>
+                        <ArrowUpRight
+                            size={10}
+                            className="text-[#6c726d]/45 transition-transform duration-150 group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-[#065f46]"
+                        />
+                    </a>
+
+                    <div className="flex items-center gap-1">
+                        <a
+                            href={SOCIAL_LINKS.discord}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Join the Discord"
+                            aria-label="Join the Discord"
+                            className="flex size-10 items-center justify-center rounded-full border border-[#151714]/8 bg-white/32 text-[#6c726d] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition-[background-color,border-color,color,transform] duration-150 hover:-translate-y-px hover:border-[#151714]/12 hover:bg-white/55 hover:text-[#151714] active:translate-y-0 active:scale-[0.92]"
+                        >
+                            <Discord size={15} />
+                        </a>
+                        <a
+                            href={SOCIAL_LINKS.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="View on GitHub"
+                            aria-label="View on GitHub"
+                            className="flex size-10 items-center justify-center rounded-full border border-[#151714]/8 bg-white/32 text-[#6c726d] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition-[background-color,border-color,color,transform] duration-150 hover:-translate-y-px hover:border-[#151714]/12 hover:bg-white/55 hover:text-[#151714] active:translate-y-0 active:scale-[0.92]"
+                        >
+                            <Github size={15} />
+                        </a>
                     </div>
                 </div>
             </SidebarFooter>

@@ -7,12 +7,12 @@ ScribeBoard is a next-generation collaborative visual whiteboard and architectur
 ## ✨ Features
 
 - **Infinite Interactive Whiteboard**: Full-featured drawing canvas powered by Excalidraw with support for freehand drawing, geometric shapes, sticky notes, arrows, text, and rich color palettes.
-- **Domain-Adaptive AI Generation**: Convert natural language prompts into structured visual diagrams across multiple domains:
+- **Domain-Adaptive AI Generation**: The assistant reads the request, chooses an appropriate visual form, and compiles it directly onto the canvas:
   - **System Architecture**: Multi-tier cloud topologies, API gateways, microservices, messaging queues, and databases.
   - **Process Workflows & Flowcharts**: Step-by-step logic flows with diamond decision branches and labeled condition paths.
-  - **Geography & Mindmaps**: Categorical region breakdowns and multi-level conceptual networks.
+  - **Mind Maps, ERDs & Journeys**: Concept networks, entity relationships, user journeys, timelines, and comparisons.
   - **Wireframe Mockups**: Instant responsive desktop and mobile interface blueprints.
-- **Automated Mathematical Layout Engine**: Directed graph compiler that places nodes in clean hierarchical columns with straight-edge arrow routing and zero overlapping shapes.
+- **Editable AI Layout Engine**: A validated graph compiler that places nodes in hierarchical columns, binds labels inside their shapes, and keeps arrows attached to the nodes they connect.
 - **Output Depth Modes**:
   - **Standard**: Clean, high-level structural overviews.
   - **Deep / Detailed**: Comprehensive multi-node topologies accompanied by markdown architectural specifications.
@@ -32,7 +32,7 @@ ScribeBoard is a next-generation collaborative visual whiteboard and architectur
 - **Framework**: Next.js 16 (App Router)
 - **Frontend UI**: React 19, Tailwind CSS v4, Base UI, Lucide Icons
 - **Canvas Engine**: `@excalidraw/excalidraw`
-- **AI Inference**: Google Gemini API (`gemini-2.0-flash`)
+- **AI Inference**: Google Gemini API (`gemini-3.5-flash` by default, configurable with `GEMINI_MODEL`)
 - **Database & ORM**: Neon Serverless PostgreSQL & Drizzle ORM
 - **Authentication**: Clerk (`@clerk/nextjs`)
 - **Language**: TypeScript
@@ -83,6 +83,9 @@ NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
 
 # Google Gemini API Key
 GEMINI_API_KEY=your_gemini_api_key
+
+# Optional: override the default model
+GEMINI_MODEL=gemini-3.5-flash
 ```
 
 ### 3. Initialize Database Schema

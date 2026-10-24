@@ -1,6 +1,69 @@
 .excalidraw .App-menu__left {
     display: none !important;
 }
-.excalidraw .App-toolbar{
+.excalidraw .App-toolbar {
     display: none !important;
+}
+
+/* Excalidraw's floating chrome joins the warm paper and ink system. */
+.excalidraw {
+    --island-bg-color: rgba(255, 252, 245, 0.82);
+    --shadow-island: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 18px 40px -24px rgba(21, 23, 20, 0.35);
+    --border-radius-lg: 14px;
+    --default-bg-color: #fbfaf6;
+    --color-primary: #065f46;
+    --color-primary-darker: #044e39;
+    --color-primary-darkest: #033b2b;
+    --color-primary-light: #a7e8c8;
+    --color-primary-light-darker: #7bcfa7;
+    --color-primary-lightest: #d8f5e6;
+    --color-surface-lowest: #fffdf8;
+    --color-surface-low: #f6f1e7;
+    --color-surface-mid: #faf5ec;
+    --color-surface-high: #f5efe4;
+    --color-surface-primary-container: #d8f5e6;
+}
+
+.excalidraw.theme--dark {
+    --island-bg-color: rgba(24, 30, 25, 0.86);
+    --shadow-island: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 18px 40px -24px rgba(0, 0, 0, 0.8);
+    --default-bg-color: #0f1410;
+    --color-primary: #5ee0a4;
+    --color-primary-darker: #48c98b;
+    --color-primary-darkest: #2aab70;
+    --color-primary-light: #8fe0bb;
+    --color-primary-light-darker: #a7e8c8;
+    --color-primary-lightest: #d8f5e6;
+    --color-surface-lowest: #161c17;
+    --color-surface-low: #1d241e;
+    --color-surface-mid: #202820;
+    --color-surface-high: #252d26;
+    --color-surface-primary-container: #1f3a2c;
+}
+
+.excalidraw .Island {
+    border: 1px solid rgba(21, 23, 20, 0.1);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.excalidraw.theme--dark .Island {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .excalidraw {
+        --island-bg-color: #fffdf7;
+    }
+
+    .excalidraw .Island {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .excalidraw.theme--dark {
+        --island-bg-color: #111511;
+    }
 }

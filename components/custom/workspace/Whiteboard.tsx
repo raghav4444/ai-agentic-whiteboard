@@ -11,7 +11,13 @@ const Excalidraw = dynamic(
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 import { toast } from '@/components/ui/toast';
-import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import type {
+    AppState,
+    BinaryFiles,
+    ExcalidrawImperativeAPI,
+    ToolType,
+} from "@excalidraw/excalidraw/types";
+import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import {
     MousePointer2,
     Hand,
@@ -24,7 +30,6 @@ import {
     Type,
     Eraser,
     Sparkles,
-    CheckCircle2,
     Loader2
 } from "@/lib/icons";
 import FloatingProperties from "./FloatingProperties";
@@ -32,28 +37,31 @@ import { Button } from "@/components/ui/button"
 import AIFloatingSidebar from "./AIFloatingSidebar";
 
 const tools = [
-    { name: "selection", icon: MousePointer2, color: "text-blue-600" },
-    { name: "hand", icon: Hand, color: "text-cyan-600" },
-    { name: "rectangle", icon: Square, color: "text-blue-600" },
-    { name: "diamond", icon: Diamond, color: "text-blue-600" },
-    { name: "ellipse", icon: Circle, color: "text-blue-600" },
-    { name: "arrow", icon: ArrowRight, color: "text-blue-600" },
-    { name: "line", icon: Minus, color: "text-blue-600" },
-    { name: "draw", icon: Pencil, color: "text-blue-600" },
-    { name: "text", icon: Type, color: "text-blue-600" },
-    { name: "eraser", icon: Eraser, color: "text-red-600" },
+    { name: "Selection", icon: MousePointer2 },
+    { name: "Hand", icon: Hand },
+    { name: "Rectangle", icon: Square },
+    { name: "Diamond", icon: Diamond },
+    { name: "Ellipse", icon: Circle },
+    { name: "Arrow", icon: ArrowRight },
+    { name: "Line", icon: Minus },
+    { name: "Draw", icon: Pencil },
+    { name: "Text", icon: Type },
+    { name: "Eraser", icon: Eraser },
 ]
 
 function Whiteboard() {
     const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
-    const saveTimerRef = useRef<any>(null);
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { projectid } = useParams();
-    const [activeTool, setActiveTool] = useState("selection");
-    const [selectedElement, setSelectedElement] = useState<any>(null);
-    const [canvasState, setCanvasState] = useState<any>(null);
+    const [activeTool, setActiveTool] = useState("Selection");
+    const [selectedElement, setSelectedElement] = useState<ExcalidrawElement | null>(null);
+    const [canvasState, setCanvasState] = useState<AppState | null>(null);
     const [showAISidebar, setShowAISidebar] = useState(false);
+    const [excalidrawMenuOpen, setExcalidrawMenuOpen] = useState(false);
     const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
     const initialLoadDone = useRef(false);
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const railHidden = showAISidebar || excalidrawMenuOpen;
 
     const loadWhiteboardData = useCallback(async (api: ExcalidrawImperativeAPI) => {
         if (!projectid || initialLoadDone.current) return;
@@ -67,6 +75,7 @@ function Whiteboard() {
                     appState: {
                         ...loadedAppState,
                         collaborators: new Map(),
+                        viewBackgroundColor: "#fbfaf6",
                     },
                 });
                 if (res.data.files && Object.keys(res.data.files).length > 0) {
@@ -85,10 +94,34 @@ function Whiteboard() {
         }
     }, [excalidrawAPI, loadWhiteboardData]);
 
-    const savecanvasChanges = async (elements: readonly any[], appState: any, files: any, showToast = false) => {
+    // Excalidraw renders its dropdowns outside React's tree. Mirror that
+    // state here so the rail is also removed from the tab order while a
+    // menu is open, not only visually hidden by CSS.
+    useEffect(() => {
+        const root = canvasContainerRef.current;
+        if (!root) return;
+
+        const syncMenuState = () => {
+            setExcalidrawMenuOpen(
+                Boolean(root.querySelector('[data-testid="dropdown-menu"]'))
+            );
+        };
+
+        syncMenuState();
+        const observer = new MutationObserver(syncMenuState);
+        observer.observe(root, {
+            childList: true,
+            subtree: true,
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
+    const savecanvasChanges = useCallback(async (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles, showToast = false) => {
         if (!projectid) return;
         setSaveStatus("saving");
-        const { collaborators, ...serializableAppState } = appState || {};
+        const serializableAppState: Partial<AppState> = { ...appState };
+        delete serializableAppState.collaborators;
         try {
             await axios.post("/api/whiteboard", {
                 projectId: projectid,
@@ -107,9 +140,9 @@ function Whiteboard() {
                 toast.add({ type: "error", title: "Save failed" });
             }
         }
-    }
+    }, [projectid])
 
-    const handleCanvasChange = (elements: readonly any[], appState: any, files: any) => {
+    const handleCanvasChange = (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
         setCanvasState(appState);
         const selectedIds = Object.keys(appState.selectedElementIds || {});
         if (selectedIds?.length === 1) {
@@ -146,14 +179,14 @@ function Whiteboard() {
         return () => {
             window.removeEventListener("whiteboard:save-request", handleManualSave);
         };
-    }, [excalidrawAPI, projectid]);
+    }, [excalidrawAPI, savecanvasChanges]);
 
-    const changeTool = (tool: any) => {
+    const changeTool = (tool: string) => {
         if (!excalidrawAPI) return;
         setActiveTool(tool);
-        const excalType = tool === "draw" ? "freedraw" : tool;
+        const excalType = tool === "Draw" ? "freedraw" : tool.toLowerCase();
         excalidrawAPI.setActiveTool({
-            type: excalType
+            type: excalType as ToolType
         });
     }
 
@@ -176,7 +209,7 @@ function Whiteboard() {
 
     const floatingPosition = getFloatingPosition();
 
-    const handlePropertyChange = (property: string, value: any) => {
+    const handlePropertyChange = (property: string, value: unknown) => {
         if (!excalidrawAPI || !selectedElement) return;
 
         const elements = excalidrawAPI.getSceneElements();
@@ -190,7 +223,7 @@ function Whiteboard() {
                 [property]: value,
                 version: element.version + 1,
                 updated: Date.now(),
-            };
+            } as unknown as ExcalidrawElement;
         });
 
         excalidrawAPI.updateScene({
@@ -305,7 +338,7 @@ function Whiteboard() {
     };
 
     return (
-        <div className="relative h-full w-full">
+        <div ref={canvasContainerRef} className="relative h-full w-full">
             <div className="h-full w-full">
                 <Excalidraw
                     excalidrawAPI={(api) => setExcalidrawAPI(api)}
@@ -313,25 +346,43 @@ function Whiteboard() {
                     initialData={{
                         appState: {
                             collaborators: new Map(),
+                            viewBackgroundColor: "#fbfaf6",
                         },
                     }}
                 />
             </div>
 
-            <div className="absolute top-1/2 left-4 z-50 -translate-y-1/2 flex flex-col gap-1 rounded-2xl bg-white/95 dark:bg-slate-900/95 border shadow-xl p-1.5 backdrop-blur-md">
+            <div
+                data-glass-reactive
+                className={`workspace-rail glass-rail-dark absolute top-1/2 left-4 z-50 flex -translate-y-1/2 flex-col gap-1 p-2 ${
+                    railHidden
+                        ? "pointer-events-none -translate-x-3 scale-95 opacity-0"
+                        : "translate-x-0 scale-100 opacity-100"
+                }`}
+                aria-hidden={railHidden || undefined}
+                inert={railHidden || undefined}
+            >
                 {tools.map((tool) => {
                     const Icon = tool.icon;
+                    const isActive = activeTool === tool.name;
                     return (
                         <button
                             key={tool.name}
                             type="button"
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-primary/10 cursor-pointer ${
-                                activeTool === tool.name ? "bg-primary/15 shadow-xs" : ""
+                            aria-label={tool.name}
+                            aria-pressed={isActive}
+                            title={tool.name}
+                            className={`group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-[12px] transition-[background-color,box-shadow,color,transform] duration-150 ease-[var(--ease-out)] active:scale-[0.96] sm:h-10 sm:w-10 ${
+                                isActive
+                                    ? "bg-[#faf9f6] text-[#151714] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_18px_-9px_rgba(0,0,0,0.75)]"
+                                    : "text-white/55 hover:bg-white/10 hover:text-white"
                             }`}
                             onClick={() => changeTool(tool.name)}
-                            title={tool.name}
                         >
-                            <Icon className={tool.color} size={17} />
+                            <Icon size={18} />
+                            {isActive && (
+                                <span className="absolute right-1.5 top-1.5 size-1 rounded-full bg-[#2aab70]" />
+                            )}
                         </button>
                     );
                 })}
@@ -348,32 +399,44 @@ function Whiteboard() {
                 onLock={handleLockElement}
             />
 
-            <div className="absolute bottom-4 left-4 z-40 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border text-[11px] text-slate-600 dark:text-slate-300 shadow-sm pointer-events-none">
+            <div className="glass-chip pointer-events-none absolute bottom-5 left-1/2 z-40 h-8 -translate-x-1/2 gap-1.5 border-[#151714]/8 px-3.5 text-[10.5px] font-semibold">
                 {saveStatus === "saving" ? (
                     <>
-                        <Loader2 className="h-3 w-3 animate-spin text-indigo-500" />
-                        <span>Saving...</span>
+                        <Loader2 className="h-3 w-3 animate-spin text-[#065f46]" />
+                        <span>Saving</span>
                     </>
                 ) : saveStatus === "saved" ? (
                     <>
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                        <span className="size-1.5 rounded-full bg-[#2aab70] shadow-[0_0_0_3px_rgba(42,171,112,0.1)]" />
                         <span>Saved</span>
                     </>
                 ) : (
                     <>
-                        <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#b07b22] animate-pulse" />
                         <span>Unsaved</span>
                     </>
                 )}
             </div>
 
-            <div className="absolute bottom-4 right-14 z-50">
+            <div
+                className={`absolute bottom-5 right-5 z-50 transition-all duration-300 ease-[var(--ease-out)] motion-reduce:transition-none ${
+                    showAISidebar
+                        ? "pointer-events-none translate-y-2 scale-95 opacity-0"
+                        : "translate-y-0 scale-100 opacity-100"
+                }`}
+                aria-hidden={showAISidebar || undefined}
+            >
                 <Button
                     size="lg"
                     onClick={() => setShowAISidebar(!showAISidebar)}
-                    className="shadow-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full px-5 gap-2 cursor-pointer transition-transform hover:scale-105"
+                    tabIndex={showAISidebar ? -1 : 0}
+                    className="h-12 gap-2.5 rounded-full border-white/12 px-5.5 text-[12.5px] shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_38px_-18px_rgba(21,23,20,0.9)]"
                 >
-                    <Sparkles className="h-4 w-4" /> AI Assistant
+                    <span className="flex size-6 items-center justify-center rounded-full bg-[#5ee0a4]/10">
+                        <Sparkles className="h-3.5 w-3.5 text-[#a7e8c8]" />
+                    </span>
+                    <span className="hidden sm:inline">AI assistant</span>
+                    <span className="sm:hidden">AI</span>
                 </Button>
             </div>
 

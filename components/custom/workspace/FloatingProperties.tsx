@@ -31,9 +31,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import type {
+  ExcalidrawElement,
+  FontFamilyValues,
+  TextAlign,
+} from "@excalidraw/excalidraw/element/types"
+
+type SelectedElement = ExcalidrawElement & {
+  textAlign?: TextAlign
+  fontFamily?: FontFamilyValues
+  fontSize?: number
+}
 
 type Props = {
-  selectedElement: any
+  selectedElement: SelectedElement | null
   position: {
     left: number
     top: number
@@ -43,7 +54,7 @@ type Props = {
   onLock?: () => void
   onBringToFront?: () => void
   onSendToBack?: () => void
-  onPropertyChange?: (property: string, value: any) => void
+  onPropertyChange?: (property: string, value: unknown) => void
 }
 
 const COLORS = [
@@ -130,7 +141,7 @@ function FloatingProperties({
     }
   }
 
-  const ElementIcon = () => {
+  const renderElementIcon = () => {
     // Mirror the selected element type so users can quickly see what the toolbar is editing.
     if (type === "rectangle") {
       return <Square size={18} />
@@ -181,7 +192,8 @@ function FloatingProperties({
 
   return (
     <div
-      className="absolute z-[500] flex items-center gap-0.5 -translate-x-1/2 -translate-y-full rounded-2xl border border-slate-200 bg-white/95 p-1 shadow-[0_12px_35px_rgba(15,23,42,0.14)] backdrop-blur-xl"
+      data-glass-reactive
+      className="glass-toolbar absolute z-[500] flex -translate-x-1/2 -translate-y-full items-center gap-0.5 p-1.5"
       style={{
         left: position.left + dragOffset.x,
         top: position.top + dragOffset.y,
@@ -194,7 +206,7 @@ function FloatingProperties({
         onPointerMove={handleDragMove}
         onPointerUp={handleDragEnd}
         onPointerCancel={handleDragEnd}
-        className="flex h-9 w-7 touch-none cursor-grab items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"
+        className="flex h-10 w-8 touch-none cursor-grab items-center justify-center rounded-[10px] text-[#6c726d]/60 transition hover:bg-[#151714]/6 hover:text-[#4d534e] active:cursor-grabbing active:scale-[0.96]"
       >
         <GripVertical size={16} />
       </button>
@@ -203,7 +215,7 @@ function FloatingProperties({
 
       {/* Read-only indicator for the selected element type. */}
       <ToolbarButton title="Element" active>
-        <ElementIcon />
+        {renderElementIcon()}
       </ToolbarButton>
 
       {/* Stroke color also acts as text color for Excalidraw text elements. */}
@@ -230,7 +242,7 @@ function FloatingProperties({
             side="bottom"
             align="center"
             sideOffset={8}
-            className="z-[9999] w-[220px] rounded-xl border border-slate-200 p-2.5 shadow-xl"
+            className="z-[9999] w-[220px] rounded-xl border border-white/75 p-2.5 shadow-xl dark:border-white/10"
           >
             <PropertyLabel>
               {isText ? "Text color" : "Stroke color"}
@@ -264,7 +276,7 @@ function FloatingProperties({
               <div className="relative">
                 <Droplet size={18} />
                 <span
-                  className="absolute -bottom-[4px] left-1/2 h-[3px] w-4 -translate-x-1/2 rounded-full border border-slate-200"
+                  className="absolute -bottom-[4px] left-1/2 h-[3px] w-4 -translate-x-1/2 rounded-full border border-[#151714]/12"
                   style={{
                     backgroundColor:
                       selectedElement.backgroundColor === "transparent"
@@ -280,7 +292,7 @@ function FloatingProperties({
             side="bottom"
             align="center"
             sideOffset={8}
-            className="z-[9999] w-[220px] rounded-xl border border-slate-200 p-2.5 shadow-xl"
+            className="z-[9999] w-[220px] rounded-xl border border-white/75 p-2.5 shadow-xl dark:border-white/10"
           >
             <PropertyLabel>Fill color</PropertyLabel>
 
@@ -307,7 +319,7 @@ function FloatingProperties({
                   "transparent"
                 )
               }
-              className="mt-2 flex h-8 w-full items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-50"
+              className="mt-2 flex h-8 w-full cursor-pointer items-center justify-center rounded-lg border border-white/50 bg-white/20 text-xs text-[#6c726d] transition-[background-color,transform] hover:bg-white/45 active:scale-[0.98] dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
             >
               No fill
             </button>
@@ -334,7 +346,7 @@ function FloatingProperties({
             side="bottom"
             align="center"
             sideOffset={8}
-            className="z-[9999] w-auto rounded-xl p-1 shadow-xl"
+            className="z-[9999] w-auto rounded-xl border border-white/75 p-1 shadow-xl dark:border-white/10"
           >
             <div className="flex gap-0.5">
               <MiniButton
@@ -386,7 +398,7 @@ function FloatingProperties({
             side="bottom"
             align="center"
             sideOffset={8}
-            className="z-[9999] w-[170px] rounded-xl p-2 shadow-xl"
+            className="z-[9999] w-[170px] rounded-xl border border-white/75 p-2 shadow-xl dark:border-white/10"
           >
             <PropertyLabel>Stroke width</PropertyLabel>
 
@@ -398,14 +410,14 @@ function FloatingProperties({
                   onClick={() =>
                     onPropertyChange?.("strokeWidth", width)
                   }
-                  className={`flex h-8 items-center justify-center rounded-lg border ${
+                  className={`flex h-8 items-center justify-center rounded-lg border transition-[background-color,border-color,transform] active:scale-[0.96] ${
                     selectedElement.strokeWidth === width
-                      ? "border-blue-300 bg-blue-50"
-                      : "border-slate-200 hover:bg-slate-50"
+                      ? "border-[#2aab70]/40 bg-[#2aab70]/10"
+                      : "border-[#151714]/12 hover:bg-[#151714]/5"
                   }`}
                 >
                   <span
-                    className="w-7 rounded-full bg-slate-700"
+                    className="w-7 rounded-full bg-[#151714]"
                     style={{
                       height: width,
                     }}
@@ -463,20 +475,20 @@ function FloatingProperties({
           side="bottom"
           align="end"
           sideOffset={8}
-          className="z-[9999] w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
+          className="z-[9999] w-[280px] overflow-hidden rounded-2xl border border-white/75 bg-[rgba(255,252,245,0.92)] p-0 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/85"
         >
           {/* ========================================= */}
           {/* HEADER */}
           {/* ========================================= */}
           <div className="flex h-9 items-center justify-between px-2.5">
-            <span className="text-[13px] font-semibold text-slate-900">
+            <span className="text-[13px] font-semibold text-[#151714]">
               {getMoreTitle()}
             </span>
 
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg text-[#6c726d]/60 transition-[background-color,color,transform] hover:bg-white/55 hover:text-[#151714] active:scale-[0.92] dark:hover:bg-white/10 dark:hover:text-white"
             >
               <X size={14} />
             </button>
@@ -546,8 +558,8 @@ function TextOptions({
   onBringToFront,
   onSendToBack,
 }: {
-  selectedElement: any
-  onPropertyChange?: (property: string, value: any) => void
+  selectedElement: SelectedElement
+  onPropertyChange?: (property: string, value: unknown) => void
   onBringToFront?: () => void
   onSendToBack?: () => void
 }) {
@@ -615,7 +627,7 @@ function TextOptions({
               onChange={(e) =>
                 onPropertyChange?.("fontSize", Number(e.target.value))
               }
-              className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-blue-400"
+              className="mt-1 h-8 w-full rounded-lg border border-[#151714]/12 bg-[rgba(255,252,245,0.72)] px-2 text-xs outline-none focus:border-[#2aab70]/50"
             >
               <option value={12}>12 px</option>
               <option value={16}>16 px</option>
@@ -700,8 +712,8 @@ function ShapeOptions({
   onBringToFront,
   onSendToBack,
 }: {
-  selectedElement: any
-  onPropertyChange?: (property: string, value: any) => void
+  selectedElement: SelectedElement
+  onPropertyChange?: (property: string, value: unknown) => void
   onBringToFront?: () => void
   onSendToBack?: () => void
 }) {
@@ -729,7 +741,7 @@ function ShapeOptions({
       <div className="px-2.5 py-2">
         <div className="flex items-center justify-between">
           <PropertyLabel>Stroke</PropertyLabel>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-[#6c726d]/60">
             Style & width
           </span>
         </div>
@@ -764,7 +776,7 @@ function ShapeOptions({
             onClick={() =>
               onPropertyChange?.("backgroundColor", "transparent")
             }
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-[#151714]/12 text-[#6c726d]/60 transition-[background-color,transform] hover:bg-[#151714]/5 active:scale-[0.92]"
           >
             <X size={13} />
           </button>
@@ -790,8 +802,8 @@ function LinearOptions({
   onBringToFront,
   onSendToBack,
 }: {
-  selectedElement: any
-  onPropertyChange?: (property: string, value: any) => void
+  selectedElement: SelectedElement
+  onPropertyChange?: (property: string, value: unknown) => void
   onBringToFront?: () => void
   onSendToBack?: () => void
 }) {
@@ -859,8 +871,8 @@ function ImageOptions({
   onBringToFront,
   onSendToBack,
 }: {
-  selectedElement: any
-  onPropertyChange?: (property: string, value: any) => void
+  selectedElement: SelectedElement
+  onPropertyChange?: (property: string, value: unknown) => void
   onBringToFront?: () => void
   onSendToBack?: () => void
 }) {
@@ -898,8 +910,8 @@ function StrokeControls({
   selectedElement,
   onPropertyChange,
 }: {
-  selectedElement: any
-  onPropertyChange?: (property: string, value: any) => void
+  selectedElement: SelectedElement
+  onPropertyChange?: (property: string, value: unknown) => void
 }) {
   const isSharpShape = (selectedElement.roughness ?? 1) === 0
 
@@ -933,7 +945,7 @@ function StrokeControls({
         onChange={(e) =>
           onPropertyChange?.("strokeWidth", Number(e.target.value))
         }
-        className="mt-1.5 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-blue-400"
+        className="mt-1.5 h-8 w-full rounded-lg border border-[#151714]/12 bg-[rgba(255,252,245,0.72)] px-2 text-xs outline-none focus:border-[#2aab70]/50"
       >
         <option value={1}>1 px — Thin</option>
         <option value={2}>2 px — Medium</option>
@@ -944,10 +956,10 @@ function StrokeControls({
         <button
           type="button"
           onClick={() => onPropertyChange?.("shapeMode", "sharp")}
-          className={`flex h-8 items-center justify-center rounded-lg border text-xs font-medium transition ${
+          className={`flex h-8 items-center justify-center rounded-lg border text-xs font-medium transition-[background-color,border-color,color,transform] active:scale-[0.98] ${
             isSharpShape
-              ? "border-blue-500 bg-blue-50 text-blue-700"
-              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              ? "border-[#2aab70]/60 bg-[#2aab70]/10 text-[#065f46]"
+              : "border-[#151714]/12 bg-[rgba(255,252,245,0.6)] text-[#6c726d] hover:border-[#151714]/18 hover:bg-[#151714]/5"
           }`}
         >
           Sharp
@@ -956,10 +968,10 @@ function StrokeControls({
         <button
           type="button"
           onClick={() => onPropertyChange?.("shapeMode", "drawn")}
-          className={`flex h-8 items-center justify-center rounded-lg border text-xs font-medium transition ${
+          className={`flex h-8 items-center justify-center rounded-lg border text-xs font-medium transition-[background-color,border-color,color,transform] active:scale-[0.98] ${
             !isSharpShape
-              ? "border-blue-500 bg-blue-50 text-blue-700"
-              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              ? "border-[#2aab70]/60 bg-[#2aab70]/10 text-[#065f46]"
+              : "border-[#151714]/12 bg-[rgba(255,252,245,0.6)] text-[#6c726d] hover:border-[#151714]/18 hover:bg-[#151714]/5"
           }`}
         >
           Hand drawn
@@ -976,15 +988,15 @@ function OpacityControl({
   selectedElement,
   onPropertyChange,
 }: {
-  selectedElement: any
-  onPropertyChange?: (property: string, value: any) => void
+  selectedElement: SelectedElement
+  onPropertyChange?: (property: string, value: unknown) => void
 }) {
   return (
     <div className="px-2.5 py-2">
       <div className="flex items-center justify-between">
         <PropertyLabel>Opacity</PropertyLabel>
 
-        <span className="text-[10px] font-medium text-slate-400">
+        <span className="text-[10px] font-medium text-[#6c726d]/60">
           {selectedElement.opacity ?? 100}%
         </span>
       </div>
@@ -997,7 +1009,7 @@ function OpacityControl({
         onChange={(e) =>
           onPropertyChange?.("opacity", Number(e.target.value))
         }
-        className="mt-1 block h-4 w-full cursor-pointer accent-blue-600"
+        className="mt-1 block h-4 w-full cursor-pointer accent-[#065f46]"
       />
     </div>
   )
@@ -1036,12 +1048,12 @@ const ToolbarButton = React.forwardRef<
         title={title}
         onClick={onClick}
         {...rest}
-        className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-150 ${
+        className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] transition-[background-color,color,box-shadow,transform] duration-150 hover:-translate-y-px active:translate-y-0 active:scale-[0.96] ${
           danger
-            ? "text-red-500 hover:bg-red-50 hover:text-red-600"
+            ? "text-rose-500 hover:bg-rose-500/12 hover:text-rose-600 dark:text-rose-400 dark:hover:bg-rose-500/15"
             : active
-            ? "bg-slate-100 text-slate-900"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            ? "bg-white/80 text-[#151714] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_6px_14px_-8px_rgba(15,23,42,0.4)] dark:bg-white/15 dark:text-slate-100"
+            : "text-[#6c726d] hover:bg-white/55 hover:text-[#151714] dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
         } ${className}`}
       >
         {children}
@@ -1067,7 +1079,7 @@ function QuickAction({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-2 text-[10px] font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+      className="flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/55 bg-white/28 px-2 text-[10.5px] font-medium text-[#6c726d] transition-[background-color,border-color,color,transform] hover:border-white/75 hover:bg-white/55 hover:text-[#151714] active:scale-[0.98] dark:border-white/8 dark:bg-white/4 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
     >
       {icon}
       <span className="truncate">{label}</span>
@@ -1091,10 +1103,10 @@ function TextOptionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-8 items-center justify-center rounded-lg border text-[11px] font-medium transition ${
+      className={`flex h-9 cursor-pointer items-center justify-center rounded-[9px] border text-[11.5px] font-medium transition-[background-color,border-color,color,transform] active:scale-[0.98] ${
         active
-          ? "border-blue-300 bg-blue-50 text-blue-600"
-          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+          ? "border-white/80 bg-white/75 text-[#065f46] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-white/15 dark:bg-white/12 dark:text-[#a7e8c8]"
+          : "border-white/50 bg-white/18 text-[#6c726d] hover:bg-white/45 dark:border-white/8 dark:bg-white/3 dark:text-slate-300 dark:hover:bg-white/8"
       }`}
     >
       {children}
@@ -1118,10 +1130,10 @@ function TextIconButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-8 items-center justify-center rounded-lg border transition ${
+      className={`flex h-9 cursor-pointer items-center justify-center rounded-[9px] border transition-[background-color,border-color,color,transform] active:scale-[0.98] ${
         active
-          ? "border-blue-300 bg-blue-50 text-blue-600"
-          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+          ? "border-white/80 bg-white/75 text-[#065f46] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-white/15 dark:bg-white/12 dark:text-[#a7e8c8]"
+          : "border-white/50 bg-white/18 text-[#6c726d] hover:bg-white/45 dark:border-white/8 dark:bg-white/3 dark:text-slate-300 dark:hover:bg-white/8"
       }`}
     >
       {children}
@@ -1145,8 +1157,8 @@ function MiniButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${
-        active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-100"
+      className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-[9px] transition-[background-color,color,transform] active:scale-[0.96] ${
+        active ? "bg-white/75 text-[#065f46] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:bg-white/12 dark:text-[#a7e8c8]" : "text-[#6c726d] hover:bg-white/45 dark:text-slate-300 dark:hover:bg-white/8"
       }`}
     >
       {children}
@@ -1170,7 +1182,7 @@ function ColorCircle({
     <button
       type="button"
       onClick={onClick}
-      className="relative flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 transition hover:scale-110"
+      className="relative flex h-7 w-7 items-center justify-center rounded-full border border-[#151714]/12 transition-transform hover:scale-110 active:scale-95"
       style={{
         backgroundColor: color,
       }}
@@ -1196,10 +1208,10 @@ function ColorSquare({
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex h-7 w-7 items-center justify-center rounded-md border transition hover:scale-110 ${
+      className={`relative flex h-7 w-7 items-center justify-center rounded-md border transition-transform hover:scale-110 active:scale-95 ${
         active
-          ? "border-blue-400 ring-1 ring-blue-200"
-          : "border-slate-200"
+          ? "border-[#2aab70]/50 ring-1 ring-[#2aab70]/20"
+          : "border-[#151714]/12"
       }`}
       style={{
         backgroundColor: color,
@@ -1226,14 +1238,14 @@ function StrokeStyleButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-8 items-center justify-center rounded-lg border transition ${
+      className={`flex h-8 items-center justify-center rounded-lg border transition-[background-color,border-color,transform] active:scale-[0.96] ${
         selected
-          ? "border-blue-300 bg-blue-50"
-          : "border-slate-200 hover:bg-slate-50"
+          ? "border-[#2aab70]/40 bg-[#2aab70]/10"
+          : "border-[#151714]/12 hover:bg-[#151714]/5"
       }`}
     >
       <div
-        className={`w-8 border-t-2 border-slate-600 ${
+        className={`w-8 border-t-2 border-[#4d534e] ${
           styleType === "solid"
             ? "border-solid"
             : styleType === "dashed"
@@ -1254,7 +1266,7 @@ function PropertyLabel({
   children: React.ReactNode
 }) {
   return (
-    <span className="text-[11px] font-semibold text-slate-500">
+    <span className="text-[11.5px] font-semibold text-[#6c726d]">
       {children}
     </span>
   )
@@ -1264,14 +1276,14 @@ function PropertyLabel({
 // TOOLBAR DIVIDER
 // ============================================================
 function ToolbarDivider() {
-  return <div className="mx-0.5 h-6 w-px bg-slate-200" />
+  return <div className="mx-0.5 h-6 w-px bg-[#151714]/10" />
 }
 
 // ============================================================
 // SECTION DIVIDER
 // ============================================================
 function SectionDivider() {
-  return <div className="h-px bg-slate-100" />
+  return <div className="h-px bg-[#151714]/7" />
 }
 
 export default FloatingProperties

@@ -11,8 +11,9 @@ import {
   ArrowUpToLineIcon, BulbIcon, Calendar01Icon, Cancel01Icon,
   CheckmarkCircle02Icon, CircleDotIcon, CircleIcon, ComputerIcon, Copy01Icon,
   CubeIcon, Cursor01Icon, Delete02Icon, DiamondIcon, Download01Icon,
-  DragDropVerticalIcon, DropletIcon, EraserIcon, File01Icon, FileScriptIcon,
-  FloppyDiskIcon, Folder01Icon, GitBranchIcon, Globe02Icon, GridViewIcon,
+  DiscordIcon, DragDropVerticalIcon, DropletIcon, EraserIcon, File01Icon, FileScriptIcon,
+  FloppyDiskIcon, Folder01Icon, GitBranchIcon, GithubIcon, Globe02Icon, GridViewIcon,
+  Linkedin01Icon,
   HandIcon, Heading01Icon, HierarchySquare02Icon, Image01Icon,
   InformationCircleIcon, Layers01Icon, LeftToRightListBulletIcon, Link01Icon,
   Loading03Icon, LockKeyIcon, LockOpenIcon, MagicWand01Icon, MinusSignIcon,
@@ -138,6 +139,9 @@ export const Box = /* @__PURE__ */ createIcon(CubeIcon, 'design');
 export const Crosshair = /* @__PURE__ */ createIcon(Target01Icon, 'target');
 export const Globe = /* @__PURE__ */ createIcon(Globe02Icon, 'client');
 export const Link2 = /* @__PURE__ */ createIcon(Link01Icon, 'connect');
+export const Discord = /* @__PURE__ */ createIcon(DiscordIcon, 'discord');
+export const Github = /* @__PURE__ */ createIcon(GithubIcon, 'github');
+export const Linkedin = /* @__PURE__ */ createIcon(Linkedin01Icon, 'linkedin');
 export const Zap = /* @__PURE__ */ createIcon(FlashIcon, 'system');
 export const Layers3 = Layers;
 export const Code2 = Code;

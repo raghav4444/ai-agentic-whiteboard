@@ -1,20 +1,49 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { UserButton } from '@clerk/nextjs'
+import { ChevronRight } from '@/lib/icons'
 import React from 'react'
 
 function AppHeader() {
   return (
-    <header className="w-full border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between bg-white/70 dark:bg-slate-900/70 backdrop-blur-md sticky top-0 z-30">
-      <div className="flex items-center gap-3">
-        <SidebarTrigger className="cursor-pointer text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100" />
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Dashboard / Overview
-        </span>
-      </div>
+    <header className="sticky top-0 z-30 px-4 pt-4 sm:px-6 lg:px-8">
+      <div
+        data-glass-reactive
+        className="glass-toolbar relative mx-auto flex h-[3.75rem] max-w-[1600px] items-center justify-between gap-3 px-3.5"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <SidebarTrigger className="size-11 shrink-0 rounded-full text-[#6c726d] hover:bg-[rgba(21,23,20,0.055)] hover:text-[#151714] active:scale-[0.96] sm:size-9" />
 
-      <div className="flex items-center gap-3">
-        <UserButton />
+          <span className="hidden h-5 w-px bg-[#151714]/10 sm:block" />
+
+          <nav
+            aria-label="Breadcrumb"
+            className="hidden min-w-0 items-center gap-2.5 sm:flex"
+          >
+            <span className="mono-label text-[#6c726d]/75">Studio</span>
+            <ChevronRight size={11} className="shrink-0 text-[#6c726d]/40" />
+            <span className="truncate text-[13px] font-semibold tracking-[-0.015em] text-[#151714]">
+              Overview
+            </span>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="glass-chip hidden h-8 gap-2 px-3 text-[10.5px] font-semibold sm:inline-flex">
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#2aab70] opacity-35" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-[#2aab70] shadow-[0_0_0_3px_rgba(42,171,112,0.12)]" />
+            </span>
+            Canvas synced
+          </span>
+
+          <span className="mono-label hidden h-8 items-center rounded-full border border-[#151714]/8 bg-[rgba(255,252,245,0.34)] px-3 text-[#6c726d]/80 md:inline-flex">
+            Gemini
+          </span>
+
+          <div className="ml-0.5 flex size-9 items-center justify-center">
+            <UserButton />
+          </div>
+        </div>
       </div>
     </header>
   )

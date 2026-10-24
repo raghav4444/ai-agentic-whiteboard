@@ -17,15 +17,17 @@ function DialogTrigger({
   ...props
 }: DialogPrimitive.Trigger.Props & { asChild?: boolean }) {
   if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>
+    const child = children as React.ReactElement<
+      React.HTMLAttributes<HTMLElement>
+    >
     return (
       <DialogPrimitive.Trigger
         data-slot="dialog-trigger"
-        render={(triggerProps: any) =>
+        render={(triggerProps: React.HTMLAttributes<HTMLElement>) =>
           React.cloneElement(child, {
             ...triggerProps,
             ...child.props,
-            className: cn(triggerProps?.className, child.props?.className),
+            className: cn(triggerProps.className, child.props.className),
           })
         }
         {...props}
@@ -45,15 +47,17 @@ function DialogClose({
   ...props
 }: DialogPrimitive.Close.Props & { asChild?: boolean }) {
   if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>
+    const child = children as React.ReactElement<
+      React.HTMLAttributes<HTMLElement>
+    >
     return (
       <DialogPrimitive.Close
         data-slot="dialog-close"
-        render={(closeProps: any) =>
+        render={(closeProps: React.HTMLAttributes<HTMLElement>) =>
           React.cloneElement(child, {
             ...closeProps,
             ...child.props,
-            className: cn(closeProps?.className, child.props?.className),
+            className: cn(closeProps.className, child.props.className),
           })
         }
         {...props}
@@ -71,7 +75,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-[#151714]/18 duration-200 supports-backdrop-filter:backdrop-blur-[10px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 dark:bg-black/50",
         className
       )}
       {...props}
@@ -93,7 +97,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-xl bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-[28px] border border-white/75 bg-[linear-gradient(150deg,rgba(255,253,247,0.94),rgba(250,249,246,0.88))] p-6 text-sm text-[#151714] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_40px_90px_-36px_rgba(21,23,20,0.42)] ring-1 ring-[#151714]/5 backdrop-blur-2xl backdrop-saturate-150 duration-200 outline-none dark:border-white/10 dark:bg-[linear-gradient(150deg,rgba(32,38,32,0.94),rgba(18,23,19,0.92))] dark:text-[#f4f2ea] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_40px_90px_-36px_rgba(0,0,0,0.9)] dark:ring-white/5 sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -161,7 +165,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("font-heading leading-none font-medium", className)}
+      className={cn("font-heading leading-none font-semibold tracking-[-0.025em]", className)}
       {...props}
     />
   )
