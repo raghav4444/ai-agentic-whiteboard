@@ -14,7 +14,6 @@ import {
   LayoutGrid,
   FileText,
   Clock,
-  Sparkles,
   ArrowUpRight,
   MoreVertical,
   Trash2,
@@ -24,7 +23,12 @@ import {
   ChevronRight,
   Activity,
   Box,
+  PanelLeft,
+  Workflow,
+  Network,
+  GitBranch,
 } from "@/lib/icons";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +54,18 @@ export interface Project {
   createdAt: string;
 }
 
-const TEMPLATES = [
+interface Blueprint {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  elements: number;
+  badge: string;
+  nodes: { name: string; tag: string; status: string }[];
+  docSpec: string;
+}
+
+const BLUEPRINTS: Blueprint[] = [
   {
     id: "microservices",
     title: "Microservices & Gateway",
@@ -58,6 +73,16 @@ const TEMPLATES = [
     description: "API Gateway, Kafka stream, auth service & Neon Postgres",
     elements: 18,
     badge: "System",
+    nodes: [
+      { name: "Web / Mobile Client", tag: "Client", status: "Active" },
+      { name: "API Gateway (Kong)", tag: "Gateway", status: "TLS 1.3" },
+      { name: "Auth & Identity", tag: "Service", status: "Healthy" },
+      { name: "Order Stream", tag: "Service", status: "Healthy" },
+      { name: "Neon Postgres DB", tag: "Database", status: "Synced" },
+      { name: "Kafka Event Bus", tag: "Broker", status: "Active" },
+    ],
+    docSpec:
+      "Distributed microservices topology featuring an edge API Gateway handling TLS termination, JWT verification, and rate limiting. Services communicate asynchronously through Kafka message brokers with primary persistence on Neon Serverless Postgres.",
   },
   {
     id: "auth-flow",
@@ -66,6 +91,14 @@ const TEMPLATES = [
     description: "MFA challenge, JWT rotation, OAuth2 and revoke fallback",
     elements: 14,
     badge: "Flow",
+    nodes: [
+      { name: "Client Ingress", tag: "HTTPS", status: "Secure" },
+      { name: "MFA Gate (TOTP)", tag: "Challenge", status: "2-Step" },
+      { name: "Token Rotation Engine", tag: "JWT", status: "15m Key" },
+      { name: "Redis Session Store", tag: "Memory", status: "0.8ms" },
+    ],
+    docSpec:
+      "Zero-trust session authorization lifecycle using short-lived cryptographically signed JWT tokens, distributed Redis session caching, and immediate token revocation with fallback audit logging.",
   },
   {
     id: "event-pipeline",
@@ -74,6 +107,14 @@ const TEMPLATES = [
     description: "Queue consumers, dead-letter storage and sync workers",
     elements: 22,
     badge: "Pipeline",
+    nodes: [
+      { name: "Producer Ingestion", tag: "Events", status: "Active" },
+      { name: "Kafka Broker Partition", tag: "Stream", status: "Balanced" },
+      { name: "Worker Consumer Pool", tag: "Workers", status: "x8 Cores" },
+      { name: "Dead-Letter Storage", tag: "Audit", status: "Retained" },
+    ],
+    docSpec:
+      "High-throughput event streaming architecture using partition-keyed Kafka topics. Consumer workers auto-scale based on queue lag, with automatic fallback forwarding to dead-letter queues upon repeated validation failure.",
   },
   {
     id: "product-wireframe",
@@ -82,12 +123,22 @@ const TEMPLATES = [
     description: "Multi-panel dashboard with floating toolbars and docked cards",
     elements: 16,
     badge: "Blueprint",
+    nodes: [
+      { name: "Infinite Pan Canvas", tag: "Surface", status: "60 FPS" },
+      { name: "Docked Tool Rails", tag: "Controls", status: "Spring" },
+      { name: "Multi-cursor Presence", tag: "SSE", status: "Live" },
+      { name: "Living Spec SmartDoc", tag: "Markdown", status: "Linked" },
+    ],
+    docSpec:
+      "Next-generation systems canvas combining infinite panning, physical spring gesture controls, multi-user real-time cursor presence, and an attached markdown architecture specification drawer.",
   },
 ];
 
 export default function StudioConsole() {
   const router = useRouter();
   const { user } = useUser();
+  const { toggleSidebar, open: sidebarOpen } = useSidebar();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,10 +146,15 @@ export default function StudioConsole() {
   const [quickPrompt, setQuickPrompt] = useState("");
   const [creatingQuick, setCreatingQuick] = useState(false);
 
+  // Active preview selection state
+  const [activeBlueprintId, setActiveBlueprintId] = useState<string>("microservices");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<"blueprint" | "project">("blueprint");
+
   // Rename & Delete state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [targetProject, setTargetProject] = useState<Project | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -130,7 +186,39 @@ export default function StudioConsole() {
     );
   }, [projects, searchQuery]);
 
-  const latestProject = projects[0] || null;
+  const activeBlueprint = useMemo(() => {
+    return (
+      BLUEPRINTS.find((b) => b.id === activeBlueprintId) || BLUEPRINTS[0]
+    );
+  }, [activeBlueprintId]);
+
+  const activeSelectedProject = useMemo(() => {
+    if (!selectedProjectId) return null;
+    return projects.find((p) => p.projectId === selectedProjectId) || null;
+  }, [projects, selectedProjectId]);
+
+  // Handle switching to a blueprint
+  const handleSelectBlueprint = (id: string) => {
+    setActiveBlueprintId(id);
+    setSelectedProjectId(null);
+    setPreviewMode("blueprint");
+    toast.add({
+      type: "info",
+      title: "Blueprint loaded on canvas",
+      description: BLUEPRINTS.find((b) => b.id === id)?.title,
+    });
+  };
+
+  // Handle selecting a recent project
+  const handleSelectProject = (project: Project) => {
+    setSelectedProjectId(project.projectId);
+    setPreviewMode("project");
+    toast.add({
+      type: "info",
+      title: "Canvas preview updated",
+      description: project.projectName,
+    });
+  };
 
   const handleQuickCreate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -161,18 +249,24 @@ export default function StudioConsole() {
     }
   };
 
-  const handleCreateFromTemplate = async (templateTitle: string) => {
+  const handleLaunchActivePreview = async () => {
+    if (previewMode === "project" && activeSelectedProject) {
+      router.push(`/workspace/${activeSelectedProject.projectId}`);
+      return;
+    }
+
+    // Otherwise launch from active blueprint
     setCreatingQuick(true);
     try {
       const projectId = crypto.randomUUID();
       await axios.post("/api/projects", {
-        projectName: templateTitle,
+        projectName: activeBlueprint.title,
         projectId,
       });
       toast.add({
         type: "success",
-        title: "Template loaded",
-        description: `Created canvas from "${templateTitle}"`,
+        title: "Blueprint loaded",
+        description: `Created workspace from "${activeBlueprint.title}"`,
       });
       router.push(`/workspace/${projectId}`);
     } catch (err) {
@@ -180,7 +274,7 @@ export default function StudioConsole() {
       toast.add({
         type: "error",
         title: "Creation failed",
-        description: "Could not load template.",
+        description: "Could not initialize blueprint.",
       });
     } finally {
       setCreatingQuick(false);
@@ -188,11 +282,11 @@ export default function StudioConsole() {
   };
 
   const handleRename = async () => {
-    if (!selectedProject || !newProjectName.trim()) return;
+    if (!targetProject || !newProjectName.trim()) return;
     setActionLoading(true);
     try {
       await axios.patch("/api/projects", {
-        projectId: selectedProject.projectId,
+        projectId: targetProject.projectId,
         projectName: newProjectName.trim(),
       });
       toast.add({ type: "success", title: "Canvas renamed" });
@@ -207,12 +301,16 @@ export default function StudioConsole() {
   };
 
   const handleDelete = async () => {
-    if (!selectedProject) return;
+    if (!targetProject) return;
     setActionLoading(true);
     try {
-      await axios.delete(`/api/projects?projectId=${selectedProject.projectId}`);
+      await axios.delete(`/api/projects?projectId=${targetProject.projectId}`);
       toast.add({ type: "success", title: "Canvas deleted" });
       setDeleteDialogOpen(false);
+      if (selectedProjectId === targetProject.projectId) {
+        setSelectedProjectId(null);
+        setPreviewMode("blueprint");
+      }
       fetchProjects();
     } catch (err) {
       console.error(err);
@@ -223,7 +321,7 @@ export default function StudioConsole() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-[1440px] py-4 sm:py-6">
+    <div className="relative mx-auto w-full max-w-[1440px] py-2 sm:py-4">
       {/* Outer Studio Tablet Console Shell */}
       <div className="relative flex flex-col gap-4 overflow-hidden rounded-[2.2rem] border border-white/[0.08] bg-[#121513] p-3 shadow-[0_36px_100px_-24px_rgba(0,0,0,0.88),inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-5 lg:flex-row">
         {/* Subtle noise and light catch */}
@@ -234,17 +332,24 @@ export default function StudioConsole() {
 
         {/* ==============================================================
             LEFT DOCK (Vertical Tool Rail)
-            Matches the circular brand button, vertical icon dock, and user profile
+            Matches the circular collapse button, vertical dock pills, and user profile
             ============================================================== */}
         <aside className="relative z-10 flex shrink-0 flex-row items-center justify-between gap-3 lg:flex-col lg:justify-between lg:py-1">
-          {/* Top Brand Circle */}
-          <Link
-            href="/dashboard"
-            aria-label="Studio Home"
+          {/* Top Circular Sidebar Collapse Button */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Toggle workspace sidebar"
+            title={sidebarOpen ? "Collapse sidebar" : "Show workspace sidebar"}
             className="group flex size-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-[#f4f2ea] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_16px_-8px_rgba(0,0,0,0.6)] transition-all duration-150 ease-[var(--ease-out)] hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.96] sm:size-12"
           >
-            <Sparkles size={18} className="text-white/80 transition-transform duration-200 group-hover:scale-110" />
-          </Link>
+            <PanelLeft
+              size={18}
+              className={`text-white/80 transition-transform duration-200 group-hover:scale-105 ${
+                sidebarOpen ? "rotate-180 text-white" : ""
+              }`}
+            />
+          </button>
 
           {/* Center Vertical Dock Pill */}
           <nav
@@ -253,7 +358,10 @@ export default function StudioConsole() {
           >
             <button
               type="button"
-              onClick={() => setActiveTab("all")}
+              onClick={() => {
+                setActiveTab("all");
+                setPreviewMode("blueprint");
+              }}
               aria-label="All Canvases"
               title="All Canvases"
               className={`relative flex size-9 items-center justify-center rounded-full transition-all duration-150 ease-[var(--ease-out)] active:scale-[0.95] sm:size-10 ${
@@ -270,7 +378,12 @@ export default function StudioConsole() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("recent")}
+              onClick={() => {
+                setActiveTab("recent");
+                if (projects.length > 0) {
+                  handleSelectProject(projects[0]);
+                }
+              }}
               aria-label="Recent Workspaces"
               title="Recent Workspaces"
               className={`relative flex size-9 items-center justify-center rounded-full transition-all duration-150 ease-[var(--ease-out)] active:scale-[0.95] sm:size-10 ${
@@ -287,9 +400,12 @@ export default function StudioConsole() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("templates")}
-              aria-label="Architecture Templates"
-              title="Architecture Templates"
+              onClick={() => {
+                setActiveTab("templates");
+                handleSelectBlueprint("microservices");
+              }}
+              aria-label="Architecture Blueprints"
+              title="Architecture Blueprints"
               className={`relative flex size-9 items-center justify-center rounded-full transition-all duration-150 ease-[var(--ease-out)] active:scale-[0.95] sm:size-10 ${
                 activeTab === "templates"
                   ? "bg-white/[0.14] text-[#f4f2ea] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]"
@@ -304,9 +420,11 @@ export default function StudioConsole() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("specs")}
+              onClick={() => {
+                setActiveTab("specs");
+              }}
               aria-label="Living Specifications"
-              title="SmartDoc Specifications"
+              title="SmartDoc Living Specs"
               className={`relative flex size-9 items-center justify-center rounded-full transition-all duration-150 ease-[var(--ease-out)] active:scale-[0.95] sm:size-10 ${
                 activeTab === "specs"
                   ? "bg-white/[0.14] text-[#f4f2ea] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]"
@@ -341,9 +459,9 @@ export default function StudioConsole() {
           {/* CENTER STACK: Hero Canvas + Bottom Bento Metrics */}
           <div className="flex flex-col gap-3.5">
             {/* HERO CANVAS CARD
-                Matches the large rounded central card with the notch on left and quick pill bar */}
-            <div className="group relative flex min-h-[360px] flex-1 flex-col justify-between overflow-hidden rounded-[1.85rem] border border-white/[0.07] bg-[#191c1a]/95 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_56px_-24px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:p-7">
-              {/* Subtle architectural dot grid inside canvas preview */}
+                Interactive preview card that dynamically updates when blueprints or boards are selected */}
+            <div className="group relative flex min-h-[420px] flex-1 flex-col justify-between overflow-hidden rounded-[1.85rem] border border-white/[0.07] bg-[#191c1a]/95 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_56px_-24px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:p-7">
+              {/* Architectural dot grid */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1.1px)] bg-[size:18px_18px] opacity-45"
@@ -352,63 +470,143 @@ export default function StudioConsole() {
               {/* Top status bar inside hero canvas */}
               <div className="relative z-10 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="mono-label text-white/40">Studio Console</span>
+                  <span className="mono-label text-white/40">Canvas Preview</span>
                   <span className="h-3 w-px bg-white/10" />
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-white/70">
-                    <span className="size-1.5 rounded-full bg-white/60" />
-                    {latestProject ? latestProject.projectName : "Empty canvas"}
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-white/80">
+                    <span className="size-1.5 rounded-full bg-emerald-400/80 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                    {previewMode === "project" && activeSelectedProject
+                      ? activeSelectedProject.projectName
+                      : activeBlueprint.title}
                   </span>
                 </div>
 
-                {latestProject && (
-                  <Link
-                    href={`/workspace/${latestProject.projectId}`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.96]"
+                <div className="flex items-center gap-2">
+                  <span className="mono-label rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[9.5px] text-white/50">
+                    {previewMode === "project" ? "User Board" : activeBlueprint.category}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleLaunchActivePreview}
+                    disabled={creatingQuick}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-3.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:border-white/25 hover:bg-white/[0.14] active:scale-[0.96] disabled:opacity-50"
                   >
-                    Open canvas <ArrowUpRight size={12} />
-                  </Link>
+                    {previewMode === "project" ? "Open canvas" : "Launch blueprint"}
+                    <ArrowUpRight size={12} />
+                  </button>
+                </div>
+              </div>
+
+              {/* INTERACTIVE CANVAS SYSTEM DIAGRAM PREVIEW */}
+              <div className="relative z-10 my-auto flex flex-col items-center justify-center py-4">
+                {activeTab === "specs" ? (
+                  /* SmartDoc Specification View */
+                  <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#121413]/90 p-4 text-left shadow-lg backdrop-blur-md">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="mono-label text-white/50">SmartDoc Spec</span>
+                      <span className="mono-label text-[10px] text-emerald-400/80">Living Spec</span>
+                    </div>
+                    <p className="mt-2.5 text-[12.5px] font-semibold text-[#f4f2ea]">
+                      {previewMode === "project" && activeSelectedProject
+                        ? activeSelectedProject.projectName
+                        : activeBlueprint.title}
+                    </p>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-white/60">
+                      {activeBlueprint.docSpec}
+                    </p>
+                  </div>
+                ) : (
+                  /* Interactive Architectural Graph Preview */
+                  <div className="relative flex w-full max-w-xl flex-col items-center justify-center">
+                    {/* SVG Connector Lines */}
+                    <div className="relative flex w-full items-center justify-between gap-3 px-2 py-3">
+                      {/* Left Node: Client / Ingress */}
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition duration-200 hover:border-white/25 hover:bg-white/[0.08]">
+                        <span className="mono-label text-[9px] text-white/40">01 / Ingress</span>
+                        <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+                          <Network size={16} />
+                        </div>
+                        <p className="text-[11px] font-semibold text-[#f4f2ea]">
+                          {activeBlueprint.nodes[0]?.name || "Client"}
+                        </p>
+                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-white/50">
+                          {activeBlueprint.nodes[0]?.tag || "Layer"}
+                        </span>
+                      </div>
+
+                      {/* Animated Connector Arrow */}
+                      <div className="relative flex flex-1 items-center justify-center">
+                        <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
+                        <span className="absolute size-2 rounded-full bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                      </div>
+
+                      {/* Center Node: Gateway / Engine */}
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.06] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition duration-200 hover:border-white/30 hover:bg-white/[0.1]">
+                        <span className="mono-label text-[9px] text-white/40">02 / Controller</span>
+                        <div className="flex size-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+                          <Workflow size={16} />
+                        </div>
+                        <p className="text-[11px] font-semibold text-[#f4f2ea]">
+                          {activeBlueprint.nodes[1]?.name || "Gateway"}
+                        </p>
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-300">
+                          {activeBlueprint.nodes[1]?.status || "Active"}
+                        </span>
+                      </div>
+
+                      {/* Animated Connector Arrow */}
+                      <div className="relative flex flex-1 items-center justify-center">
+                        <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
+                        <span className="absolute size-2 rounded-full bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                      </div>
+
+                      {/* Right Node: Storage / Output */}
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition duration-200 hover:border-white/25 hover:bg-white/[0.08]">
+                        <span className="mono-label text-[9px] text-white/40">03 / State</span>
+                        <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+                          <Box size={16} />
+                        </div>
+                        <p className="text-[11px] font-semibold text-[#f4f2ea]">
+                          {activeBlueprint.nodes[2]?.name || "Datastore"}
+                        </p>
+                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-white/50">
+                          {activeBlueprint.nodes[2]?.tag || "Storage"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Canvas Topology Title & Action */}
+                    <div className="mt-3 text-center">
+                      <h1 className="text-[20px] font-semibold tracking-[-0.035em] text-[#f4f2ea] sm:text-[23px]">
+                        {previewMode === "project" && activeSelectedProject ? (
+                          <>
+                            Editing{" "}
+                            <span className="font-editorial text-white/90">
+                              {activeSelectedProject.projectName}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            Systems Blueprint:{" "}
+                            <span className="font-editorial text-white/90">
+                              {activeBlueprint.title}
+                            </span>
+                          </>
+                        )}
+                      </h1>
+                      <p className="mt-1 text-[12px] text-white/50">
+                        {previewMode === "project" && activeSelectedProject
+                          ? `Canvas created on ${new Date(
+                              activeSelectedProject.createdAt
+                            ).toLocaleDateString()} with living markdown specification.`
+                          : activeBlueprint.description}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Center Canvas Glyph / Interactive Visual Focal Point */}
-              <div className="relative z-10 my-auto flex flex-col items-center justify-center py-6 text-center">
-                <div className="relative flex size-20 items-center justify-center rounded-[1.6rem] border border-white/10 bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_18px_40px_-14px_rgba(0,0,0,0.7)] transition-transform duration-300 ease-[var(--ease-out)] group-hover:scale-105 sm:size-24">
-                  {/* Geometric glyph representation matching wireframe */}
-                  <div className="relative size-10 text-white/70">
-                    <div className="absolute inset-x-0 bottom-0 top-2 rounded-[8px] border border-white/40 bg-white/[0.08]" />
-                    <div className="absolute right-1 top-0 size-3 rounded-full border border-white/50 bg-white/30" />
-                    <div className="absolute bottom-1.5 left-2 h-2.5 w-5 rounded-[4px] bg-white/20" />
-                  </div>
-                </div>
-
-                <h1 className="mt-4 text-[22px] font-semibold leading-tight tracking-[-0.04em] text-[#f4f2ea] sm:text-[26px]">
-                  {latestProject ? (
-                    <>
-                      Continue working on{" "}
-                      <span className="font-editorial text-white/90">
-                        {latestProject.projectName}.
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      A blank surface for{" "}
-                      <span className="font-editorial text-white/90">
-                        systems thinking.
-                      </span>
-                    </>
-                  )}
-                </h1>
-
-                <p className="mt-2 max-w-[28rem] text-[12.5px] leading-relaxed text-white/50">
-                  {latestProject
-                    ? "Your diagrams, specifications, and architecture decisions stay organized in one place."
-                    : "Draw technical diagrams, explore microservice relationships, and attach living specifications."}
-                </p>
-              </div>
-
-              {/* Floating Bottom Prompt & Launch Capsule
-                  Matches the (+) button and input capsule drawn on the bottom of the wireframe card */}
-              <div className="relative z-10 mt-auto pt-4">
+              {/* Floating Bottom Prompt & Launch Capsule */}
+              <div className="relative z-10 mt-auto pt-2">
                 <form
                   onSubmit={handleQuickCreate}
                   className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full border border-white/[0.12] bg-[#141615]/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_16px_36px_-12px_rgba(0,0,0,0.85)] backdrop-blur-2xl transition-all focus-within:border-white/25 focus-within:shadow-[0_0_0_3px_rgba(255,255,255,0.06)]"
@@ -444,7 +642,7 @@ export default function StudioConsole() {
 
             {/* BOTTOM BENTO METRICS BOX
                 Matches the segmented bento card with metric capsules and bottom activity slider */}
-            <div className="relative overflow-hidden rounded-[1.65rem] border border-white/[0.06] bg-[#161816]/90 p-4.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_16px_32px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-5">
+            <div className="relative overflow-hidden rounded-[1.65rem] border border-white/[0.06] bg-[#161816]/90 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_16px_32px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-5">
               {/* Header Pill */}
               <div className="flex items-center justify-between">
                 <span className="mono-label text-white/40">Studio Metrics</span>
@@ -452,9 +650,13 @@ export default function StudioConsole() {
               </div>
 
               {/* 3 Metric Capsules Grid */}
-              <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                 {/* Capsule 1: Canvases */}
-                <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.025] p-3 transition hover:bg-white/[0.04]">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("all")}
+                  className="rounded-[14px] border border-white/[0.06] bg-white/[0.025] p-3 text-left transition hover:border-white/15 hover:bg-white/[0.04] active:scale-[0.98]"
+                >
                   <div className="flex items-center justify-between">
                     <span className="mono-label text-white/40">Canvases</span>
                     <Box size={13} className="text-white/40" />
@@ -463,11 +665,15 @@ export default function StudioConsole() {
                     {projects.length}
                     <span className="ml-1 text-[11px] font-normal text-white/40">active</span>
                   </p>
-                  <p className="mt-0.5 text-[10.5px] text-white/40">Infinite canvas surface</p>
-                </div>
+                  <p className="mt-0.5 text-[10.5px] text-white/40">Click to view all</p>
+                </button>
 
                 {/* Capsule 2: SmartDoc */}
-                <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.025] p-3 transition hover:bg-white/[0.04]">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("specs")}
+                  className="rounded-[14px] border border-white/[0.06] bg-white/[0.025] p-3 text-left transition hover:border-white/15 hover:bg-white/[0.04] active:scale-[0.98]"
+                >
                   <div className="flex items-center justify-between">
                     <span className="mono-label text-white/40">Living Spec</span>
                     <FileText size={13} className="text-white/40" />
@@ -476,11 +682,21 @@ export default function StudioConsole() {
                     SmartDoc
                     <span className="ml-1 text-[11px] font-normal text-white/40">linked</span>
                   </p>
-                  <p className="mt-0.5 text-[10.5px] text-white/40">Markdown architecture</p>
-                </div>
+                  <p className="mt-0.5 text-[10.5px] text-white/40">Click to view specs</p>
+                </button>
 
                 {/* Capsule 3: Real-Time Sync */}
-                <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.025] p-3 transition hover:bg-white/[0.04]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.add({
+                      type: "info",
+                      title: "Real-time SSE Sync",
+                      description: "Collaborative presence and delta synchronization active.",
+                    });
+                  }}
+                  className="rounded-[14px] border border-white/[0.06] bg-white/[0.025] p-3 text-left transition hover:border-white/15 hover:bg-white/[0.04] active:scale-[0.98]"
+                >
                   <div className="flex items-center justify-between">
                     <span className="mono-label text-white/40">Sync State</span>
                     <Activity size={13} className="text-white/40" />
@@ -489,12 +705,12 @@ export default function StudioConsole() {
                     Real-time
                     <span className="ml-1 text-[11px] font-normal text-white/40">SSE</span>
                   </p>
-                  <p className="mt-0.5 text-[10.5px] text-white/40">Delta merge & presence</p>
-                </div>
+                  <p className="mt-0.5 text-[10.5px] text-white/40">Delta merge active</p>
+                </button>
               </div>
 
               {/* Bottom activity rail / slider */}
-              <div className="mt-4 flex items-center gap-3 border-t border-white/[0.05] pt-3">
+              <div className="mt-3.5 flex items-center gap-3 border-t border-white/[0.05] pt-3">
                 <span className="mono-label text-[9px] text-white/35">Storage status</span>
                 <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
                   <div
@@ -513,7 +729,7 @@ export default function StudioConsole() {
 
           {/* ==============================================================
               RIGHT COLUMN STACK
-              Matches the Search Pill + 3 Layered Board Cards + Fanned Template Deck
+              Matches the Search Pill + Layered Board Cards + Fanned Template Deck
               ============================================================== */}
           <div className="flex flex-col gap-3.5">
             {/* TOP RIGHT SEARCH CAPSULE */}
@@ -523,16 +739,18 @@ export default function StudioConsole() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search boards and specs..."
+                placeholder="Search boards and blueprints..."
                 className="h-11 w-full rounded-full border border-white/[0.08] bg-white/[0.04] pl-9 pr-4 text-[12px] text-[#f4f2ea] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.06] focus:outline-none"
               />
             </div>
 
             {/* LAYERED RECENT BOARD CARDS
-                Matches the 3 stacked cards with rounded left notch tabs from the wireframe */}
+                Matches the stacked cards with rounded left notch tabs from the wireframe */}
             <div className="relative flex flex-col gap-2 rounded-[1.7rem] border border-white/[0.06] bg-[#161816]/90 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-4">
               <div className="mb-1 flex items-center justify-between px-1">
-                <span className="mono-label text-white/40">Recent Canvases</span>
+                <span className="mono-label text-white/40">
+                  {activeTab === "all" ? "All Canvases" : "Recent Canvases"}
+                </span>
                 <span className="mono-label text-white/35">{filteredProjects.length} total</span>
               </div>
 
@@ -548,109 +766,143 @@ export default function StudioConsole() {
                   <p className="mt-1 text-[11px] text-white/25">Use the prompt bar to initialize one</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {filteredProjects.slice(0, 3).map((project, index) => (
-                    <div
-                      key={project.projectId}
-                      className="group relative flex items-center justify-between overflow-hidden rounded-[14px] border border-white/[0.06] bg-white/[0.03] p-3 transition-all duration-150 ease-[var(--ease-out)] hover:border-white/15 hover:bg-white/[0.06] hover:-translate-y-0.5 active:scale-[0.99]"
-                    >
-                      {/* Left rounded tab indicator matching the wireframe */}
-                      <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-white/30 transition group-hover:bg-white/80" />
+                <div className="no-scrollbar flex max-h-[260px] flex-col gap-2 overflow-y-auto">
+                  {filteredProjects
+                    .slice(0, activeTab === "all" ? 10 : 3)
+                    .map((project) => {
+                      const isSelected =
+                        previewMode === "project" &&
+                        selectedProjectId === project.projectId;
 
-                      <Link
-                        href={`/workspace/${project.projectId}`}
-                        className="min-w-0 flex-1 pl-2.5"
-                      >
-                        <p className="truncate text-[12.5px] font-semibold text-[#f4f2ea] group-hover:text-white">
-                          {project.projectName}
-                        </p>
-                        <p className="mt-0.5 flex items-center gap-1.5 text-[10.5px] text-white/40">
-                          <Calendar size={10} />
-                          {new Date(project.createdAt).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </Link>
-
-                      <div className="flex items-center gap-1">
-                        <Link
-                          href={`/workspace/${project.projectId}`}
-                          aria-label={`Open ${project.projectName}`}
-                          className="flex size-7 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
+                      return (
+                        <div
+                          key={project.projectId}
+                          onClick={() => handleSelectProject(project)}
+                          onDoubleClick={() => router.push(`/workspace/${project.projectId}`)}
+                          className={`group relative flex cursor-pointer items-center justify-between overflow-hidden rounded-[14px] border p-3 transition-all duration-150 ease-[var(--ease-out)] active:scale-[0.99] ${
+                            isSelected
+                              ? "border-white/25 bg-white/[0.08] shadow-sm"
+                              : "border-white/[0.06] bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.06]"
+                          }`}
                         >
-                          <ArrowUpRight size={13} />
-                        </Link>
+                          {/* Left rounded tab indicator matching the wireframe */}
+                          <span
+                            className={`absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full transition ${
+                              isSelected
+                                ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]"
+                                : "bg-white/25 group-hover:bg-white/70"
+                            }`}
+                          />
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              aria-label="Options"
+                          <div className="min-w-0 flex-1 pl-2.5">
+                            <p
+                              className={`truncate text-[12.5px] font-semibold transition ${
+                                isSelected ? "text-white" : "text-[#f4f2ea] group-hover:text-white"
+                              }`}
+                            >
+                              {project.projectName}
+                            </p>
+                            <p className="mt-0.5 flex items-center gap-1.5 text-[10.5px] text-white/40">
+                              <Calendar size={10} />
+                              {new Date(project.createdAt).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Link
+                              href={`/workspace/${project.projectId}`}
+                              aria-label={`Open ${project.projectName}`}
                               className="flex size-7 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
                             >
-                              <MoreVertical size={13} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-36">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedProject(project);
-                                setNewProjectName(project.projectName);
-                                setRenameDialogOpen(true);
-                              }}
-                              className="gap-2 text-xs"
-                            >
-                              <Edit3 size={13} /> Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedProject(project);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="gap-2 text-xs text-red-500 focus:text-red-500"
-                            >
-                              <Trash2 size={13} /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  ))}
+                              <ArrowUpRight size={13} />
+                            </Link>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Options"
+                                  className="flex size-7 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
+                                >
+                                  <MoreVertical size={13} />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setTargetProject(project);
+                                    setNewProjectName(project.projectName);
+                                    setRenameDialogOpen(true);
+                                  }}
+                                  className="gap-2 text-xs"
+                                >
+                                  <Edit3 size={13} /> Rename
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setTargetProject(project);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  className="gap-2 text-xs text-red-500 focus:text-red-500"
+                                >
+                                  <Trash2 size={13} /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
 
-            {/* FANNED DECK OF TEMPLATE CARDS
-                Matches the stacked, fanned-out cards at the bottom right of the wireframe */}
+            {/* FANNED DECK OF BLUEPRINT CARDS
+                Matches the stacked, fanned-out blueprint cards. Clicking dynamically updates the canvas preview! */}
             <div className="relative mt-auto overflow-hidden rounded-[1.7rem] border border-white/[0.06] bg-[#161816]/90 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
               <div className="mb-2 flex items-center justify-between">
                 <span className="mono-label text-white/40">Blueprints</span>
-                <span className="mono-label text-white/35">Click to load</span>
+                <span className="mono-label text-[10px] text-white/35">Click to preview</span>
               </div>
 
               {/* Fanned Card Stack */}
-              <div className="group/fan relative mt-2 flex h-40 w-full items-center justify-center overflow-hidden rounded-2xl bg-black/20 p-2">
-                {TEMPLATES.map((tpl, i) => {
-                  const rotations = ["-rotate-6", "-rotate-2", "rotate-3", "rotate-6"];
-                  const zIndexes = [10, 20, 30, 40];
-                  const xOffsets = ["-translate-x-6", "-translate-x-2", "translate-x-2", "translate-x-6"];
-                  const rotation = rotations[i % rotations.length];
-                  const xOffset = xOffsets[i % xOffsets.length];
+              <div className="group/fan relative mt-2 flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-black/25 p-2">
+                {BLUEPRINTS.map((tpl, i) => {
+                  const isSelected =
+                    previewMode === "blueprint" && activeBlueprintId === tpl.id;
+
+                  const rotations = [-6, -2, 2, 6];
+                  const defaultRotation = rotations[i % rotations.length];
 
                   return (
                     <button
                       key={tpl.id}
                       type="button"
                       disabled={creatingQuick}
-                      onClick={() => handleCreateFromTemplate(tpl.title)}
-                      className={`absolute w-44 rounded-xl border border-white/[0.1] bg-[#202422] p-3 text-left shadow-[0_12px_28px_-10px_rgba(0,0,0,0.85)] transition-all duration-200 ease-[var(--ease-out)] group-hover/fan:${xOffset} group-hover/fan:${rotation} hover:!scale-105 hover:!border-white/30 hover:!z-50 active:scale-95`}
+                      onClick={() => handleSelectBlueprint(tpl.id)}
+                      className={`absolute w-48 rounded-xl border p-3 text-left shadow-[0_12px_28px_-10px_rgba(0,0,0,0.85)] transition-all duration-200 ease-[var(--ease-out)] active:scale-95 ${
+                        isSelected
+                          ? "!z-50 !rotate-0 !scale-105 border-white/40 bg-[#252a27] shadow-[0_18px_36px_-8px_rgba(0,0,0,0.9)] ring-1 ring-white/30"
+                          : "border-white/[0.1] bg-[#1d211f] hover:border-white/30 hover:bg-[#232725]"
+                      }`}
                       style={{
-                        zIndex: zIndexes[i],
-                        transform: `rotate(${(i - 1.5) * 5}deg) translateY(${i * 2}px)`,
+                        zIndex: isSelected ? 50 : (i + 1) * 10,
+                        transform: isSelected
+                          ? "rotate(0deg) scale(1.05) translateY(-4px)"
+                          : `rotate(${defaultRotation}deg) translateY(${i * 2}px)`,
                       }}
                     >
-                      <span className="mono-label text-[9px] text-white/40">{tpl.category}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="mono-label text-[9px] text-white/45">
+                          {tpl.category}
+                        </span>
+                        {isSelected && (
+                          <span className="flex size-1.5 rounded-full bg-emerald-400" />
+                        )}
+                      </div>
                       <p className="mt-1 truncate text-[11.5px] font-semibold text-[#f4f2ea]">
                         {tpl.title}
                       </p>
@@ -663,10 +915,14 @@ export default function StudioConsole() {
               </div>
 
               <div className="mt-2.5 flex items-center justify-between text-[11px] text-white/40">
-                <span>Select any blueprint</span>
-                <span className="flex items-center gap-1 font-medium text-white/70">
-                  Instant launch <ChevronRight size={11} />
-                </span>
+                <span>Select to change canvas</span>
+                <button
+                  type="button"
+                  onClick={handleLaunchActivePreview}
+                  className="flex items-center gap-1 font-semibold text-white/80 transition hover:text-white"
+                >
+                  Load blueprint <ChevronRight size={11} />
+                </button>
               </div>
             </div>
           </div>
@@ -718,7 +974,7 @@ export default function StudioConsole() {
           <p className="py-2 text-sm text-muted-foreground">
             Are you sure you want to delete{" "}
             <span className="font-semibold text-foreground">
-              "{selectedProject?.projectName}"
+              "{targetProject?.projectName}"
             </span>
             ? This action cannot be undone.
           </p>
