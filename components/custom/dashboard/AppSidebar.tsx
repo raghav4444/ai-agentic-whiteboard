@@ -5,11 +5,12 @@ import {
     SidebarFooter,
     SidebarGroup,
     SidebarHeader,
+    useSidebar,
 } from "@/components/ui/sidebar"
 import Image from "next/image"
 import Link from "next/link"
 import { SidebarGroupLabel, SidebarMenuButton } from "@/components/ui/sidebar"
-import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin } from "@/lib/icons"
+import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin, PanelLeft } from "@/lib/icons"
 import { usePathname } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { UserButton, useUser } from "@clerk/nextjs"
@@ -41,6 +42,7 @@ export function AppSidebar() {
     const path = usePathname();
     const { user } = useUser();
     const { userDetail } = useContext(UserDetailContext) || {};
+    const { toggleSidebar } = useSidebar();
     const [projects, setProjects] = useState<ProjectItem[]>([]);
     const [aiModalOpen, setAiModalOpen] = useState(false);
 
@@ -70,22 +72,33 @@ export function AppSidebar() {
             data-glass-reactive
         >
             <SidebarHeader className="px-4 pt-4 pb-3">
-                <Link
-                    href="/dashboard"
-                    className="group -m-1.5 flex items-center gap-3 rounded-2xl p-1.5 transition-[background-color,transform] duration-150 hover:bg-white/35 active:scale-[0.99]"
-                >
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-[15px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,253,247,0.9),rgba(255,250,240,0.5))] shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_22px_-14px_rgba(21,23,20,0.45)] backdrop-blur-md">
-                        <Image src="/logo.svg" alt="ScribeBoard" width={25} height={25} />
-                    </span>
-                    <div className="min-w-0">
-                        <h1 className="truncate text-[15px] font-extrabold leading-none tracking-[-0.05em] text-[#151714]">
-                            Scribe<span>Board</span>
-                        </h1>
-                        <span className="mono-label mt-1.5 block text-[#6c726d]/70">
-                            Studio Canvas
+                <div className="flex items-center justify-between">
+                    <Link
+                        href="/dashboard"
+                        className="group -m-1.5 flex items-center gap-3 rounded-2xl p-1.5 transition-[background-color,transform] duration-150 hover:bg-white/35 active:scale-[0.99]"
+                    >
+                        <span className="flex size-11 shrink-0 items-center justify-center rounded-[15px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,253,247,0.9),rgba(255,250,240,0.5))] shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_22px_-14px_rgba(21,23,20,0.45)] backdrop-blur-md">
+                            <Image src="/logo.svg" alt="ScribeBoard" width={25} height={25} />
                         </span>
-                    </div>
-                </Link>
+                        <div className="min-w-0">
+                            <h1 className="truncate text-[15px] font-extrabold leading-none tracking-[-0.05em] text-[#151714]">
+                                Scribe<span>Board</span>
+                            </h1>
+                            <span className="mono-label mt-1.5 block text-[#6c726d]/70">
+                                Studio Canvas
+                            </span>
+                        </div>
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={toggleSidebar}
+                        aria-label="Collapse sidebar"
+                        title="Collapse sidebar"
+                        className="flex size-8 items-center justify-center rounded-xl border border-black/8 bg-white/40 text-[#6c726d] transition-colors hover:bg-white/80 hover:text-[#151714] active:scale-95"
+                    >
+                        <PanelLeft size={15} />
+                    </button>
+                </div>
             </SidebarHeader>
 
             <SidebarContent className="px-3 pb-2">
