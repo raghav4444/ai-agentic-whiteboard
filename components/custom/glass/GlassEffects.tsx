@@ -79,18 +79,27 @@ export default function GlassEffects() {
 
     let frame = 0
     let current: HTMLElement | null = null
-    let pending: { element: HTMLElement; x: number; y: number } | null = null
+    let pendingTarget: { element: HTMLElement; x: number; y: number } | null = null
+    let pendingGlobal: { x: number; y: number } | null = null
 
     const applyLight = () => {
       frame = 0
-      if (!pending) return
-      const { element, x, y } = pending
-      pending = null
-      element.style.setProperty("--glass-x", `${x}px`)
-      element.style.setProperty("--glass-y", `${y}px`)
+      if (pendingGlobal) {
+        document.documentElement.style.setProperty("--cursor-x", `${pendingGlobal.x}px`)
+        document.documentElement.style.setProperty("--cursor-y", `${pendingGlobal.y}px`)
+        pendingGlobal = null
+      }
+      if (pendingTarget) {
+        const { element, x, y } = pendingTarget
+        pendingTarget = null
+        element.style.setProperty("--glass-x", `${x}px`)
+        element.style.setProperty("--glass-y", `${y}px`)
+      }
     }
 
     const handlePointerMove = (event: PointerEvent) => {
+      pendingGlobal = { x: event.clientX, y: event.clientY }
+
       const target =
         event.target instanceof Element
           ? event.target.closest<HTMLElement>(REACTIVE)
@@ -102,13 +111,13 @@ export default function GlassEffects() {
         current?.setAttribute("data-glass-hover", "true")
       }
 
-      if (!target) return
-
-      const rect = target.getBoundingClientRect()
-      pending = {
-        element: target,
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
+      if (target) {
+        const rect = target.getBoundingClientRect()
+        pendingTarget = {
+          element: target,
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }
       }
 
       if (!frame) {
@@ -119,7 +128,10 @@ export default function GlassEffects() {
     const clearLight = () => {
       current?.removeAttribute("data-glass-hover")
       current = null
-      pending = null
+      pendingTarget = null
+      pendingGlobal = null
+      document.documentElement.style.setProperty("--cursor-x", "-999px")
+      document.documentElement.style.setProperty("--cursor-y", "-999px")
       if (frame) {
         window.cancelAnimationFrame(frame)
         frame = 0
