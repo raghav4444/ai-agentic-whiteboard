@@ -193,6 +193,7 @@ function FloatingProperties({
   return (
     <div
       data-glass-reactive
+      onPointerDown={(e) => e.stopPropagation()}
       className="glass-toolbar absolute z-[500] flex -translate-x-1/2 -translate-y-full items-center gap-0.5 p-1.5"
       style={{
         left: position.left + dragOffset.x,
