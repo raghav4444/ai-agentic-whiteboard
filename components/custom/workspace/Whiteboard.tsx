@@ -60,6 +60,19 @@ const tools = [
     { name: "Eraser", icon: Eraser },
 ]
 
+const TOOL_NAME_MAP: Record<string, string> = {
+    selection: "Selection",
+    hand: "Hand",
+    rectangle: "Rectangle",
+    diamond: "Diamond",
+    ellipse: "Ellipse",
+    arrow: "Arrow",
+    line: "Line",
+    freedraw: "Draw",
+    text: "Text",
+    eraser: "Eraser",
+};
+
 const LIBRARY_STORAGE_KEY = "scribeboard:excalidraw-library:v1";
 const MAX_CACHED_ELEMENTS_CHARS = 2_400_000;
 
@@ -627,7 +640,16 @@ function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
             setSelectedElement(null);
         }
 
-        activeToolRef.current = appState.activeTool?.type || "selection";
+        const currentTool = appState.activeTool?.type;
+        if (currentTool) {
+            activeToolRef.current = currentTool;
+            const mappedName = TOOL_NAME_MAP[currentTool];
+            if (mappedName) {
+                setActiveTool(mappedName);
+            }
+        } else {
+            activeToolRef.current = "selection";
+        }
         sendSelectionPresence(appState);
 
         if (!initialLoadDone.current) return;
@@ -830,8 +852,10 @@ function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
         if (!excalidrawAPI || readOnly) return;
         setActiveTool(tool);
         const excalType = tool === "Draw" ? "freedraw" : tool.toLowerCase();
+        const shouldLock = excalType !== "selection" && excalType !== "hand";
         excalidrawAPI.setActiveTool({
-            type: excalType as ToolType
+            type: excalType as ToolType,
+            locked: shouldLock,
         });
         session.sendPresence({
             activeTool: excalType,
@@ -1048,6 +1072,7 @@ function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
 
             <div
                 data-glass-reactive
+                onPointerDown={(e) => e.stopPropagation()}
                 className={`workspace-rail glass-rail-dark absolute top-1/2 left-4 z-50 flex -translate-y-1/2 flex-col gap-1 p-2 ${
                     railHidden
                         ? "pointer-events-none -translate-x-3 scale-95 opacity-0"
