@@ -694,10 +694,10 @@ export default function AIFloatingSidebar({
               <button
                 type="button"
                 onClick={() => setDetailLevel("standard")}
-                className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
+                className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,border-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                   detailLevel === "standard"
-                    ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
-                    : "text-white/45 hover:text-white/85"
+                    ? "border border-white/20 bg-white/18 font-semibold text-[#f7f4eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.35)] backdrop-blur-md"
+                    : "border border-transparent text-white/50 hover:bg-white/6 hover:text-white/85"
                 }`}
               >
                 Standard
@@ -705,10 +705,10 @@ export default function AIFloatingSidebar({
               <button
                 type="button"
                 onClick={() => setDetailLevel("enterprise")}
-                className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
+                className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,border-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                   detailLevel === "enterprise"
-                    ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
-                    : "text-white/45 hover:text-white/85"
+                    ? "border border-white/20 bg-white/18 font-semibold text-[#f7f4eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.35)] backdrop-blur-md"
+                    : "border border-transparent text-white/50 hover:bg-white/6 hover:text-white/85"
                 }`}
               >
                 Detailed
@@ -725,10 +725,10 @@ export default function AIFloatingSidebar({
                 <button
                   type="button"
                   onClick={() => setCanvasMode("replace")}
-                  className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
+                  className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,border-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                     canvasMode === "replace"
-                      ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
-                      : "text-white/45 hover:text-white/85"
+                      ? "border border-white/20 bg-white/18 font-semibold text-[#f7f4eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.35)] backdrop-blur-md"
+                      : "border border-transparent text-white/50 hover:bg-white/6 hover:text-white/85"
                   }`}
                 >
                   Replace
@@ -736,10 +736,10 @@ export default function AIFloatingSidebar({
                 <button
                   type="button"
                   onClick={() => setCanvasMode("append")}
-                  className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
+                  className={`cursor-pointer rounded-full px-2.5 py-1.5 transition-[background-color,color,border-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                     canvasMode === "append"
-                      ? "bg-[#faf9f6] font-semibold text-[#151714] shadow-[0_4px_10px_-6px_rgba(0,0,0,0.6)]"
-                      : "text-white/45 hover:text-white/85"
+                      ? "border border-white/20 bg-white/18 font-semibold text-[#f7f4eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.35)] backdrop-blur-md"
+                    : "border border-transparent text-white/50 hover:bg-white/6 hover:text-white/85"
                   }`}
                 >
                   Append
@@ -772,42 +772,37 @@ export default function AIFloatingSidebar({
             ))}
           </div>
 
-          <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_12px_28px_-10px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-[border-color,background-color,box-shadow] duration-150 focus-within:border-white/25 focus-within:bg-white/[0.07] focus-within:ring-2 focus-within:ring-white/10">
+          <div className="relative overflow-hidden rounded-2xl border border-white/14 bg-black/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),inset_0_2px_10px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-white/28 focus-within:bg-black/45 focus-within:ring-2 focus-within:ring-white/10">
             <textarea
               value={userInput}
               onChange={(event) => setUserInput(event.target.value)}
               onKeyDown={handleKeyDown}
               maxLength={500}
               placeholder="Describe what you want to understand, map, or build..."
-              className="
-                min-h-[104px] w-full resize-none border-0 bg-transparent
-                px-3.5 py-3 text-[12.5px] leading-relaxed text-[#f4f2ea] shadow-none outline-none
-                placeholder:text-white/35 focus:outline-none focus:ring-0
-              "
+              className="min-h-[104px] w-full resize-none border-0 bg-transparent px-3.5 py-3 text-[12.5px] leading-relaxed text-[#f7f4eb] placeholder:text-white/35 outline-none focus:outline-none focus:ring-0 selection:bg-white/20"
             />
 
-            <div className="flex items-center justify-between border-t border-white/8 px-3 py-2">
-              <div className="mono-label flex items-center gap-1.5 text-white/35">
-                <Wand2 className="h-2.5 w-2.5 text-white/50" />
+            <div className="flex items-center justify-between border-t border-white/8 bg-black/15 px-3.5 py-2">
+              <div className="mono-label flex items-center gap-1.5 text-white/40">
+                <Wand2 className="h-2.5 w-2.5 text-white/60" />
                 <span>Studio engine</span>
               </div>
-              <span className="mono-label text-white/25">
+              <span className="mono-label tabular-nums text-white/30">
                 {userInput.length}/500
               </span>
             </div>
           </div>
 
-          <Button
-            size="sm"
-            variant="inverse"
+          <button
+            type="button"
             onClick={onClickGenerate}
             disabled={loading || !userInput.trim() || !excalidrawApi}
-            className="mt-3 h-10 w-full cursor-pointer gap-2 px-4 text-[12px]"
+            className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/10 px-4 text-[12px] font-semibold text-[#f7f4eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_12px_28px_-10px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-[background-color,border-color,box-shadow,transform,opacity] duration-150 ease-[var(--ease-out)] hover:border-white/28 hover:bg-white/16 active:scale-[0.985] active:bg-white/20 disabled:pointer-events-none disabled:border-white/8 disabled:bg-white/5 disabled:text-white/30 disabled:shadow-none"
           >
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {selectedTool === "Auto" ? "Create visual" : "Generate elements"}
-            <ArrowUp size={14} className="ml-auto" />
-          </Button>
+            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-white/80" />}
+            <span>{selectedTool === "Auto" ? "Create visual" : "Generate elements"}</span>
+            <ArrowUp size={14} className="ml-auto text-white/70 transition-transform group-hover:-translate-y-0.5 group-hover:text-white" />
+          </button>
         </div>
       </div>
     </div>
