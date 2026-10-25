@@ -2067,11 +2067,10 @@
 
   background-image:
     radial-gradient(circle, rgba(21, 23, 20, 0.13) 1px, transparent 1.25px),
-    radial-gradient(220px circle at var(--cursor-x, -999px) var(--cursor-y, -999px), rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.1) 36%, transparent 70%),
     radial-gradient(40rem 32rem at -2% 8%, rgba(252, 246, 232, 0.98), transparent 64%),
     radial-gradient(52rem 42rem at 55% 112%, rgba(229, 196, 119, 0.18), transparent 68%),
     linear-gradient(180deg, #faf9f6 0%, #f7f4ed 52%, #faf9f6 100%);
-  background-size: 26px 26px, auto, auto, auto, auto;
+  background-size: 26px 26px, auto, auto, auto;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
 }
 
@@ -2091,7 +2090,6 @@
 
   background-image:
     radial-gradient(circle, rgba(244, 242, 234, 0.07) 1px, transparent 1.25px),
-    radial-gradient(220px circle at var(--cursor-x, -999px) var(--cursor-y, -999px), rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 36%, transparent 70%),
     radial-gradient(40rem 32rem at -2% 8%, rgba(252, 246, 232, 0.05), transparent 64%),
     radial-gradient(52rem 42rem at 55% 112%, rgba(229, 196, 119, 0.08), transparent 68%),
     linear-gradient(180deg, #0e120f 0%, #0b0f0c 54%, #0e120f 100%);
@@ -2248,47 +2246,29 @@
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(
-      180px circle at var(--glass-x, 50%) var(--glass-y, 50%),
-      rgba(255, 255, 255, 0.96) 0%,
-      rgba(255, 255, 255, 0.58) 22%,
-      rgba(255, 255, 255, 0.16) 48%,
-      rgba(255, 255, 255, 0.03) 68%,
-      transparent 80%
-    ),
-    linear-gradient(112deg, transparent 28%, rgba(255, 255, 255, 0.16) 46%, transparent 62%);
+    linear-gradient(112deg, transparent 28%, rgba(255, 255, 255, 0.08) 46%, transparent 62%);
   mix-blend-mode: soft-light;
-  opacity: 0.15;
+  opacity: 0.12;
   transition: opacity 180ms ease-out;
 }
 
 .glass-dark::after,
 .glass-rail-dark::after,
 .glass-row::after {
-  background:
-    radial-gradient(
-      175px circle at var(--glass-x, 50%) var(--glass-y, 50%),
-      rgba(255, 255, 255, 0.84) 0%,
-      rgba(255, 255, 255, 0.48) 22%,
-      rgba(255, 255, 255, 0.14) 48%,
-      rgba(255, 255, 255, 0.02) 68%,
-      transparent 80%
-    );
-  mix-blend-mode: screen;
-  opacity: 0.18;
+  display: none;
 }
 
 [data-glass-hover="true"]::after {
-  opacity: 0.88;
+  opacity: 0.16;
 }
 
 [data-glass-hover="true"].glass-dark::after,
 [data-glass-hover="true"].glass-rail-dark::after,
 [data-glass-hover="true"].glass-row::after {
-  opacity: 0.78;
+  display: none;
 }
 
-/* The rim gets a second, sharper specular break so the edge reads as
+/* The rim gets a clean specular break so the edge reads as
    glass rather than a generic border. */
 .glass-panel::before,
 .glass-toolbar::before,
@@ -2297,14 +2277,8 @@
 .glass-dark::before,
 .glass-row-light::before {
   background:
-    radial-gradient(
-      180px circle at var(--glass-x, 50%) var(--glass-y, 50%),
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.35) 36%,
-      transparent 72%
-    ),
-    linear-gradient(112deg, transparent 8%, rgba(255, 255, 255, 0.82) 22%, transparent 38%),
-    linear-gradient(152deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.25) 24%, rgba(255, 255, 255, 0.03) 58%, rgba(255, 255, 255, 0.6) 100%);
+    linear-gradient(112deg, transparent 8%, rgba(255, 255, 255, 0.45) 22%, transparent 38%),
+    linear-gradient(152deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.15) 24%, rgba(255, 255, 255, 0.02) 58%, rgba(255, 255, 255, 0.3) 100%);
   transition: opacity 200ms ease-out;
 }
 
@@ -2741,15 +2715,14 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(180px circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 22%, rgba(255, 255, 255, 0.16) 48%, transparent 75%),
-    linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.18) 46%, transparent 62%);
+    linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.08) 46%, transparent 62%);
   mix-blend-mode: soft-light;
-  opacity: 0.16;
+  opacity: 0.12;
   transition: opacity 180ms ease-out;
 }
 
 .glass-aside[data-glass-hover="true"]::after {
-  opacity: 0.85;
+  opacity: 0.16;
 }
 
 .dark .glass-aside {
