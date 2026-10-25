@@ -46,11 +46,11 @@ function WelcomeBanner() {
             {/* Light moving through smoked glass. */}
             <div
                 aria-hidden
-                className="hero-light pointer-events-none absolute -left-32 -top-36 size-[26rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(42,171,112,0.42),transparent_68%)] blur-2xl"
+                className="hero-light pointer-events-none absolute -left-32 -top-36 size-[26rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_68%)] blur-2xl"
             />
             <div
                 aria-hidden
-                className="hero-light hero-light-late pointer-events-none absolute -bottom-44 left-[34%] size-[26rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(229,196,119,0.24),transparent_68%)] blur-3xl"
+                className="hero-light hero-light-late pointer-events-none absolute -bottom-44 left-[34%] size-[26rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(229,196,119,0.18),transparent_68%)] blur-3xl"
             />
             <div
                 aria-hidden
@@ -64,16 +64,9 @@ function WelcomeBanner() {
 
             <div className="relative z-10 grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
                 <div className="max-w-2xl">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="size-1.5 rounded-full bg-[#5ee0a4] shadow-[0_0_0_4px_rgba(94,224,164,0.12)]" />
-                        <span className="mono-label text-[#a7e8c8]">AI-assisted systems thinking</span>
-                        <span className="hidden h-px w-10 bg-white/20 sm:block" />
-                        <span className="mono-label hidden text-white/40 sm:block">Studio · 01</span>
-                    </div>
-
-                    <h1 className="mt-5 text-[2.3rem] font-semibold leading-[0.95] tracking-[-0.058em] text-[#f7f4eb] sm:text-[3rem] lg:text-[3.5rem]">
+                    <h1 className="text-[2.3rem] font-semibold leading-[0.95] tracking-[-0.058em] text-[#f7f4eb] sm:text-[3rem] lg:text-[3.5rem]">
                         {greeting},<br />
-                        <span className="font-editorial text-[#a7e8c8]">{user?.firstName || "creator"}.</span>
+                        <span className="font-editorial text-[#f7f4eb]">{user?.firstName || "creator"}.</span>
                     </h1>
 
                     <p className="mt-5 max-w-[34rem] text-[14px] leading-[1.75] text-white/62">
@@ -99,7 +92,7 @@ function WelcomeBanner() {
                     </div>
 
                     <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-medium text-white/44">
-                        <span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-[#5ee0a4]/70" /> Infinite canvas</span>
+                        <span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-white/60" /> Infinite canvas</span>
                         <span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-white/40" /> Editable output</span>
                         <span className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-white/40" /> Living spec</span>
                     </div>
