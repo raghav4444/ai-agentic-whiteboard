@@ -32,6 +32,8 @@ interface AIFloatingSidebarProps {
   onClose?: () => void
   onGenerate?: (tool: string, prompt: string) => void
   excalidrawApi?: ExcalidrawImperativeAPI | null
+  projectId?: string
+  shareToken?: string
 }
 
 interface GeneratedElement {
@@ -118,6 +120,8 @@ export default function AIFloatingSidebar({
   onClose,
   onGenerate,
   excalidrawApi,
+  projectId,
+  shareToken,
 }: AIFloatingSidebarProps) {
   const [selectedTool, setSelectedTool] = useState("Auto")
   const [selectedType, setSelectedType] = useState(AiTools[0])
@@ -271,6 +275,8 @@ export default function AIFloatingSidebar({
         type: currentAiTool.name,
         detailLevel,
         canvasMode: requestedCanvasMode,
+        ...(projectId ? { projectId } : {}),
+        ...(shareToken ? { shareToken } : {}),
         ...(boardContext.length > 0 ? { context: boardContext } : {}),
       })
 
@@ -431,6 +437,8 @@ export default function AIFloatingSidebar({
         userInput: userInput.trim() || (actionType === "explain" ? "Explain current board" : "Brainstorm whiteboard ideas"),
         action: actionType,
         context: summaryContext,
+        ...(projectId ? { projectId } : {}),
+        ...(shareToken ? { shareToken } : {}),
       })
 
       if (result.data?.response) {

@@ -4,6 +4,7 @@ import {
   compileDiagramFromUnknown,
   DiagramSpecError,
 } from "@/lib/ai/diagram";
+import { verifyShareToken } from "@/lib/collab/token";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -394,16 +395,36 @@ function extractJson(raw: string): unknown {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await currentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = (await req.json().catch(() => null)) as
       | Record<string, unknown>
       | null;
     if (!body) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
+
+    const user = await currentUser();
+    if (!user) {
+      const shareToken =
+        asText(body.shareToken, 2_400) ||
+        req.headers.get("x-share-token") ||
+        "";
+      const share = verifyShareToken(shareToken);
+      const requestProjectId = asText(body.projectId, 160);
+
+      if (
+        !share ||
+        share.permission !== "edit" ||
+        (requestProjectId && requestProjectId !== share.projectId)
+      ) {
+        return NextResponse.json(
+          {
+            error: "Unauthorized",
+            detail:
+              "Sign in, or open this board through an edit-enabled share link.",
+          },
+          { status: 401 }
+        );
+      }
     }
 
     const userInput = asText(body.userInput, MAX_INPUT_LENGTH);
