@@ -30,14 +30,9 @@ function AppHeader() {
         <div className="flex items-center gap-2">
           <span className="glass-chip hidden h-8 gap-2 px-3 text-[10.5px] font-semibold sm:inline-flex">
             <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#2aab70] opacity-35" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-[#2aab70] shadow-[0_0_0_3px_rgba(42,171,112,0.12)]" />
+              <span className="size-1.5 rounded-full bg-[#151714]/60 dark:bg-white/70" />
             </span>
-            Canvas synced
-          </span>
-
-          <span className="mono-label hidden h-8 items-center rounded-full border border-[#151714]/8 bg-[rgba(255,252,245,0.34)] px-3 text-[#6c726d]/80 md:inline-flex">
-            Gemini
+            Synced
           </span>
 
           <div className="ml-0.5 flex size-9 items-center justify-center">
