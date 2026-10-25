@@ -27,6 +27,11 @@ import {
   Workflow,
   Network,
   GitBranch,
+  Pencil,
+  Square,
+  Diamond,
+  Type,
+  Loader2,
 } from "@/lib/icons";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -61,7 +66,6 @@ interface Blueprint {
   description: string;
   elements: number;
   badge: string;
-  nodes: { name: string; tag: string; status: string }[];
   docSpec: string;
 }
 
@@ -73,14 +77,6 @@ const BLUEPRINTS: Blueprint[] = [
     description: "API Gateway, Kafka stream, auth service & Neon Postgres",
     elements: 18,
     badge: "System",
-    nodes: [
-      { name: "Web / Mobile Client", tag: "Client", status: "Active" },
-      { name: "API Gateway (Kong)", tag: "Gateway", status: "TLS 1.3" },
-      { name: "Auth & Identity", tag: "Service", status: "Healthy" },
-      { name: "Order Stream", tag: "Service", status: "Healthy" },
-      { name: "Neon Postgres DB", tag: "Database", status: "Synced" },
-      { name: "Kafka Event Bus", tag: "Broker", status: "Active" },
-    ],
     docSpec:
       "Distributed microservices topology featuring an edge API Gateway handling TLS termination, JWT verification, and rate limiting. Services communicate asynchronously through Kafka message brokers with primary persistence on Neon Serverless Postgres.",
   },
@@ -91,12 +87,6 @@ const BLUEPRINTS: Blueprint[] = [
     description: "MFA challenge, JWT rotation, OAuth2 and revoke fallback",
     elements: 14,
     badge: "Flow",
-    nodes: [
-      { name: "Client Ingress", tag: "HTTPS", status: "Secure" },
-      { name: "MFA Gate (TOTP)", tag: "Challenge", status: "2-Step" },
-      { name: "Token Rotation Engine", tag: "JWT", status: "15m Key" },
-      { name: "Redis Session Store", tag: "Memory", status: "0.8ms" },
-    ],
     docSpec:
       "Zero-trust session authorization lifecycle using short-lived cryptographically signed JWT tokens, distributed Redis session caching, and immediate token revocation with fallback audit logging.",
   },
@@ -107,12 +97,6 @@ const BLUEPRINTS: Blueprint[] = [
     description: "Queue consumers, dead-letter storage and sync workers",
     elements: 22,
     badge: "Pipeline",
-    nodes: [
-      { name: "Producer Ingestion", tag: "Events", status: "Active" },
-      { name: "Kafka Broker Partition", tag: "Stream", status: "Balanced" },
-      { name: "Worker Consumer Pool", tag: "Workers", status: "x8 Cores" },
-      { name: "Dead-Letter Storage", tag: "Audit", status: "Retained" },
-    ],
     docSpec:
       "High-throughput event streaming architecture using partition-keyed Kafka topics. Consumer workers auto-scale based on queue lag, with automatic fallback forwarding to dead-letter queues upon repeated validation failure.",
   },
@@ -123,16 +107,425 @@ const BLUEPRINTS: Blueprint[] = [
     description: "Multi-panel dashboard with floating toolbars and docked cards",
     elements: 16,
     badge: "Blueprint",
-    nodes: [
-      { name: "Infinite Pan Canvas", tag: "Surface", status: "60 FPS" },
-      { name: "Docked Tool Rails", tag: "Controls", status: "Spring" },
-      { name: "Multi-cursor Presence", tag: "SSE", status: "Live" },
-      { name: "Living Spec SmartDoc", tag: "Markdown", status: "Linked" },
-    ],
     docSpec:
       "Next-generation systems canvas combining infinite panning, physical spring gesture controls, multi-user real-time cursor presence, and an attached markdown architecture specification drawer.",
   },
 ];
+
+/**
+ * Renders live Excalidraw vector elements from a user's canvas.
+ * Falls back to an inviting drawing canvas view if empty.
+ */
+function LiveCanvasRenderer({
+  elements,
+  loading,
+  projectName,
+}: {
+  elements: any[];
+  loading: boolean;
+  projectName: string;
+}) {
+  if (loading) {
+    return (
+      <div className="flex h-56 w-full items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-white/40" />
+      </div>
+    );
+  }
+
+  const activeElements = Array.isArray(elements)
+    ? elements.filter((el) => !el.isDeleted)
+    : [];
+
+  if (activeElements.length === 0) {
+    return (
+      <div className="relative flex h-56 w-full max-w-lg flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-6 text-center transition hover:border-white/25 hover:bg-white/[0.04]">
+        <div className="flex size-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 shadow-inner">
+          <Pencil size={20} />
+        </div>
+        <p className="mt-3 text-[13px] font-semibold text-[#f4f2ea]">
+          Canvas: {projectName}
+        </p>
+        <p className="mt-1 max-w-xs text-[11.5px] leading-relaxed text-white/45">
+          Click anywhere on this canvas to open the studio whiteboard and start drawing.
+        </p>
+        <div className="mt-4 flex items-center gap-2">
+          <span className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/60">
+            <Square size={11} /> Shapes
+          </span>
+          <span className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/60">
+            <Diamond size={11} /> Flow logic
+          </span>
+          <span className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/60">
+            <Type size={11} /> Architecture text
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate bounding box of real elements
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+
+  activeElements.forEach((el) => {
+    const x = el.x ?? 0;
+    const y = el.y ?? 0;
+    const w = el.width ?? 0;
+    const h = el.height ?? 0;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);
+    maxY = Math.max(maxY, y + h);
+  });
+
+  const pad = 40;
+  const vbX = minX - pad;
+  const vbY = minY - pad;
+  const vbW = Math.max(160, maxX - minX + pad * 2);
+  const vbH = Math.max(120, maxY - minY + pad * 2);
+
+  return (
+    <div className="relative flex h-60 w-full max-w-xl items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#141715]/85 p-2 shadow-inner">
+      <svg
+        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+        className="size-full max-h-56"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {activeElements.map((el, i) => {
+          const stroke =
+            el.strokeColor &&
+            el.strokeColor !== "#000000" &&
+            el.strokeColor !== "#1e1e1e"
+              ? el.strokeColor
+              : "#f4f2ea";
+          const fill =
+            el.backgroundColor && el.backgroundColor !== "transparent"
+              ? el.backgroundColor
+              : "rgba(255,255,255,0.06)";
+          const strokeWidth = el.strokeWidth || 1.75;
+
+          if (el.type === "rectangle") {
+            return (
+              <rect
+                key={el.id || i}
+                x={el.x}
+                y={el.y}
+                width={Math.max(4, el.width)}
+                height={Math.max(4, el.height)}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                rx={el.roundness ? 6 : 2}
+              />
+            );
+          }
+          if (el.type === "ellipse") {
+            return (
+              <ellipse
+                key={el.id || i}
+                cx={el.x + el.width / 2}
+                cy={el.y + el.height / 2}
+                rx={Math.max(2, Math.abs(el.width / 2))}
+                ry={Math.max(2, Math.abs(el.height / 2))}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+              />
+            );
+          }
+          if (el.type === "diamond") {
+            const cx = el.x + el.width / 2;
+            const cy = el.y + el.height / 2;
+            const pts = `${cx},${el.y} ${el.x + el.width},${cy} ${cx},${
+              el.y + el.height
+            } ${el.x},${cy}`;
+            return (
+              <polygon
+                key={el.id || i}
+                points={pts}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+              />
+            );
+          }
+          if (el.type === "text" && el.text) {
+            return (
+              <text
+                key={el.id || i}
+                x={el.x}
+                y={el.y + (el.fontSize || 14)}
+                fill={stroke}
+                fontSize={el.fontSize || 13}
+                fontFamily="sans-serif"
+                fontWeight="500"
+              >
+                {el.text}
+              </text>
+            );
+          }
+          if (el.type === "arrow" || el.type === "line") {
+            const points = el.points || [[0, 0], [el.width, el.height]];
+            const d = points.reduce(
+              (acc: string, pt: [number, number], idx: number) => {
+                const px = el.x + pt[0];
+                const py = el.y + pt[1];
+                return idx === 0 ? `M ${px} ${py}` : `${acc} L ${px} ${py}`;
+              },
+              ""
+            );
+            return (
+              <path
+                key={el.id || i}
+                d={d}
+                fill="none"
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            );
+          }
+          if (el.type === "freedraw" && el.points) {
+            const d = el.points.reduce(
+              (acc: string, pt: [number, number], idx: number) => {
+                const px = el.x + pt[0];
+                const py = el.y + pt[1];
+                return idx === 0 ? `M ${px} ${py}` : `${acc} L ${px} ${py}`;
+              },
+              ""
+            );
+            return (
+              <path
+                key={el.id || i}
+                d={d}
+                fill="none"
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+              />
+            );
+          }
+          return null;
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Dedicated visual diagram renderer for blueprints
+ */
+function BlueprintDiagramPreview({ blueprintId }: { blueprintId: string }) {
+  if (blueprintId === "microservices") {
+    return (
+      <div className="relative flex w-full max-w-xl flex-col items-center justify-center">
+        <div className="relative flex w-full items-center justify-between gap-2 px-2 py-3">
+          {/* Node 1: Web Client */}
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+            <span className="mono-label text-[9px] text-white/40">Client Tier</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+              <Network size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">Web / Mobile</p>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+              HTTPS / TLS
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
+            <span className="absolute size-2 rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+          </div>
+
+          {/* Node 2: API Gateway */}
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-white/[0.06] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
+            <span className="mono-label text-[9px] text-white/40">Ingress</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+              <Workflow size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">API Gateway</p>
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8.5px] font-medium text-emerald-300">
+              Rate Limit
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
+            <span className="absolute size-2 rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+          </div>
+
+          {/* Node 3: Neon DB & Kafka */}
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+            <span className="mono-label text-[9px] text-white/40">Persistence</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+              <Box size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">Postgres + Kafka</p>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+              Port 5432
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (blueprintId === "auth-flow") {
+    return (
+      <div className="relative flex w-full max-w-xl flex-col items-center justify-center">
+        <div className="relative flex w-full items-center justify-between gap-2 px-2 py-3">
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
+            <span className="mono-label text-[9px] text-white/40">Challenge</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+              <Network size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">User Login</p>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+              Credential
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-amber-400/50 to-white/10" />
+            <span className="absolute size-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+          </div>
+
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-white/[0.06] p-3 text-center">
+            <span className="mono-label text-[9px] text-white/40">2-Step MFA</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+              <Diamond size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">TOTP Auth</p>
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8.5px] font-medium text-emerald-300">
+              Verified
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-emerald-400/50 to-white/10" />
+            <span className="absolute size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          </div>
+
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
+            <span className="mono-label text-[9px] text-white/40">Session</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+              <Box size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">JWT Rotation</p>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+              Redis Store
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (blueprintId === "event-pipeline") {
+    return (
+      <div className="relative flex w-full max-w-xl flex-col items-center justify-center">
+        <div className="relative flex w-full items-center justify-between gap-2 px-2 py-3">
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
+            <span className="mono-label text-[9px] text-white/40">Producer</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+              <Network size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">Webhooks</p>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+              Ingest Hook
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-cyan-400/50 to-white/10" />
+            <span className="absolute size-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+          </div>
+
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-white/[0.06] p-3 text-center">
+            <span className="mono-label text-[9px] text-white/40">Message Bus</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+              <GitBranch size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">Kafka Queue</p>
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8.5px] font-medium text-emerald-300">
+              x3 Partitions
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-cyan-400/50 to-white/10" />
+            <span className="absolute size-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+          </div>
+
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
+            <span className="mono-label text-[9px] text-white/40">Sink</span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+              <Box size={16} />
+            </div>
+            <p className="text-[11px] font-semibold text-[#f4f2ea]">Worker Cluster</p>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+              Dead Letter Q
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // product-wireframe fallback
+  return (
+    <div className="relative flex w-full max-w-xl flex-col items-center justify-center">
+      <div className="relative flex w-full items-center justify-between gap-2 px-2 py-3">
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
+          <span className="mono-label text-[9px] text-white/40">Surface</span>
+          <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+            <Square size={16} />
+          </div>
+          <p className="text-[11px] font-semibold text-[#f4f2ea]">Infinite Pan</p>
+          <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+            60 FPS
+          </span>
+        </div>
+
+        <div className="relative flex flex-1 items-center justify-center">
+          <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
+          <span className="absolute size-2 rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+        </div>
+
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-white/[0.06] p-3 text-center">
+          <span className="mono-label text-[9px] text-white/40">Controls</span>
+          <div className="flex size-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+            <Workflow size={16} />
+          </div>
+          <p className="text-[11px] font-semibold text-[#f4f2ea]">Docked Rails</p>
+          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8.5px] font-medium text-emerald-300">
+            Spring Easing
+          </span>
+        </div>
+
+        <div className="relative flex flex-1 items-center justify-center">
+          <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
+          <span className="absolute size-2 rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+        </div>
+
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
+          <span className="mono-label text-[9px] text-white/40">Spec</span>
+          <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
+            <FileText size={16} />
+          </div>
+          <p className="text-[11px] font-semibold text-[#f4f2ea]">SmartDoc</p>
+          <span className="rounded-full bg-white/5 px-2 py-0.5 text-[8.5px] text-white/50">
+            Markdown Spec
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function StudioConsole() {
   const router = useRouter();
@@ -150,6 +543,10 @@ export default function StudioConsole() {
   const [activeBlueprintId, setActiveBlueprintId] = useState<string>("microservices");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<"blueprint" | "project">("blueprint");
+
+  // Real whiteboard elements state
+  const [projectElements, setProjectElements] = useState<any[]>([]);
+  const [loadingElements, setLoadingElements] = useState(false);
 
   // Rename & Delete state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -197,26 +594,46 @@ export default function StudioConsole() {
     return projects.find((p) => p.projectId === selectedProjectId) || null;
   }, [projects, selectedProjectId]);
 
-  // Handle switching to a blueprint
-  const handleSelectBlueprint = (id: string) => {
-    setActiveBlueprintId(id);
-    setSelectedProjectId(null);
-    setPreviewMode("blueprint");
-    toast.add({
-      type: "info",
-      title: "Blueprint loaded on canvas",
-      description: BLUEPRINTS.find((b) => b.id === id)?.title,
-    });
-  };
+  // Load real whiteboard elements from database
+  const loadProjectElements = useCallback(async (projectId: string) => {
+    setLoadingElements(true);
+    try {
+      const res = await axios.get(`/api/whiteboard?projectId=${projectId}`);
+      if (res.data && Array.isArray(res.data.elements)) {
+        setProjectElements(res.data.elements);
+      } else {
+        setProjectElements([]);
+      }
+    } catch (err) {
+      console.error("Failed to load whiteboard elements:", err);
+      setProjectElements([]);
+    } finally {
+      setLoadingElements(false);
+    }
+  }, []);
 
   // Handle selecting a recent project
   const handleSelectProject = (project: Project) => {
     setSelectedProjectId(project.projectId);
     setPreviewMode("project");
+    loadProjectElements(project.projectId);
     toast.add({
       type: "info",
-      title: "Canvas preview updated",
+      title: "Canvas loaded in preview",
       description: project.projectName,
+    });
+  };
+
+  // Handle switching to a blueprint
+  const handleSelectBlueprint = (id: string) => {
+    setActiveBlueprintId(id);
+    setSelectedProjectId(null);
+    setPreviewMode("blueprint");
+    setProjectElements([]);
+    toast.add({
+      type: "info",
+      title: "Blueprint loaded on canvas",
+      description: BLUEPRINTS.find((b) => b.id === id)?.title,
     });
   };
 
@@ -310,6 +727,7 @@ export default function StudioConsole() {
       if (selectedProjectId === targetProject.projectId) {
         setSelectedProjectId(null);
         setPreviewMode("blueprint");
+        setProjectElements([]);
       }
       fetchProjects();
     } catch (err) {
@@ -360,7 +778,6 @@ export default function StudioConsole() {
               type="button"
               onClick={() => {
                 setActiveTab("all");
-                setPreviewMode("blueprint");
               }}
               aria-label="All Canvases"
               title="All Canvases"
@@ -459,16 +876,27 @@ export default function StudioConsole() {
           {/* CENTER STACK: Hero Canvas + Bottom Bento Metrics */}
           <div className="flex flex-col gap-3.5">
             {/* HERO CANVAS CARD
-                Interactive preview card that dynamically updates when blueprints or boards are selected */}
-            <div className="group relative flex min-h-[420px] flex-1 flex-col justify-between overflow-hidden rounded-[1.85rem] border border-white/[0.07] bg-[#191c1a]/95 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_56px_-24px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:p-7">
+                Interactive preview card that dynamically updates when blueprints or boards are selected.
+                Clicking anywhere on the canvas opens the studio workspace! */}
+            <div
+              onClick={handleLaunchActivePreview}
+              title="Click anywhere to open canvas in editor"
+              className="group/hero relative flex min-h-[430px] flex-1 cursor-pointer flex-col justify-between overflow-hidden rounded-[1.85rem] border border-white/[0.07] bg-[#191c1a]/95 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_56px_-24px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-all duration-200 hover:border-white/20 hover:shadow-[0_30px_70px_-24px_rgba(0,0,0,0.85)] sm:p-7"
+            >
               {/* Architectural dot grid */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1.1px)] bg-[size:18px_18px] opacity-45"
               />
 
+              {/* Hover indicator banner */}
+              <div className="pointer-events-none absolute right-4 top-4 z-20 hidden items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10.5px] font-semibold text-white shadow-lg backdrop-blur-md transition-all group-hover/hero:flex">
+                <span>Open in editor</span>
+                <ArrowUpRight size={12} />
+              </div>
+
               {/* Top status bar inside hero canvas */}
-              <div className="relative z-10 flex items-center justify-between gap-3">
+              <div className="relative z-10 flex items-center justify-between gap-3" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2.5">
                   <span className="mono-label text-white/40">Canvas Preview</span>
                   <span className="h-3 w-px bg-white/10" />
@@ -496,7 +924,7 @@ export default function StudioConsole() {
                 </div>
               </div>
 
-              {/* INTERACTIVE CANVAS SYSTEM DIAGRAM PREVIEW */}
+              {/* CENTER CANVAS VISUAL PREVIEW */}
               <div className="relative z-10 my-auto flex flex-col items-center justify-center py-4">
                 {activeTab === "specs" ? (
                   /* SmartDoc Specification View */
@@ -514,91 +942,43 @@ export default function StudioConsole() {
                       {activeBlueprint.docSpec}
                     </p>
                   </div>
-                ) : (
-                  /* Interactive Architectural Graph Preview */
-                  <div className="relative flex w-full max-w-xl flex-col items-center justify-center">
-                    {/* SVG Connector Lines */}
-                    <div className="relative flex w-full items-center justify-between gap-3 px-2 py-3">
-                      {/* Left Node: Client / Ingress */}
-                      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition duration-200 hover:border-white/25 hover:bg-white/[0.08]">
-                        <span className="mono-label text-[9px] text-white/40">01 / Ingress</span>
-                        <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
-                          <Network size={16} />
-                        </div>
-                        <p className="text-[11px] font-semibold text-[#f4f2ea]">
-                          {activeBlueprint.nodes[0]?.name || "Client"}
-                        </p>
-                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-white/50">
-                          {activeBlueprint.nodes[0]?.tag || "Layer"}
-                        </span>
-                      </div>
-
-                      {/* Animated Connector Arrow */}
-                      <div className="relative flex flex-1 items-center justify-center">
-                        <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
-                        <span className="absolute size-2 rounded-full bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-                      </div>
-
-                      {/* Center Node: Gateway / Engine */}
-                      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.06] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition duration-200 hover:border-white/30 hover:bg-white/[0.1]">
-                        <span className="mono-label text-[9px] text-white/40">02 / Controller</span>
-                        <div className="flex size-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
-                          <Workflow size={16} />
-                        </div>
-                        <p className="text-[11px] font-semibold text-[#f4f2ea]">
-                          {activeBlueprint.nodes[1]?.name || "Gateway"}
-                        </p>
-                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-300">
-                          {activeBlueprint.nodes[1]?.status || "Active"}
-                        </span>
-                      </div>
-
-                      {/* Animated Connector Arrow */}
-                      <div className="relative flex flex-1 items-center justify-center">
-                        <div className="h-0.5 w-full bg-gradient-to-r from-white/10 via-white/40 to-white/10" />
-                        <span className="absolute size-2 rounded-full bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-                      </div>
-
-                      {/* Right Node: Storage / Output */}
-                      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition duration-200 hover:border-white/25 hover:bg-white/[0.08]">
-                        <span className="mono-label text-[9px] text-white/40">03 / State</span>
-                        <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80">
-                          <Box size={16} />
-                        </div>
-                        <p className="text-[11px] font-semibold text-[#f4f2ea]">
-                          {activeBlueprint.nodes[2]?.name || "Datastore"}
-                        </p>
-                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-white/50">
-                          {activeBlueprint.nodes[2]?.tag || "Storage"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Canvas Topology Title & Action */}
+                ) : previewMode === "project" && activeSelectedProject ? (
+                  /* Live Canvas Elements Renderer for User's Selected Board */
+                  <div className="flex w-full flex-col items-center justify-center">
+                    <LiveCanvasRenderer
+                      elements={projectElements}
+                      loading={loadingElements}
+                      projectName={activeSelectedProject.projectName}
+                    />
                     <div className="mt-3 text-center">
                       <h1 className="text-[20px] font-semibold tracking-[-0.035em] text-[#f4f2ea] sm:text-[23px]">
-                        {previewMode === "project" && activeSelectedProject ? (
-                          <>
-                            Editing{" "}
-                            <span className="font-editorial text-white/90">
-                              {activeSelectedProject.projectName}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            Systems Blueprint:{" "}
-                            <span className="font-editorial text-white/90">
-                              {activeBlueprint.title}
-                            </span>
-                          </>
-                        )}
+                        Editing{" "}
+                        <span className="font-editorial text-white/90">
+                          {activeSelectedProject.projectName}
+                        </span>
                       </h1>
                       <p className="mt-1 text-[12px] text-white/50">
-                        {previewMode === "project" && activeSelectedProject
-                          ? `Canvas created on ${new Date(
+                        {projectElements.length > 0
+                          ? `Rendering ${projectElements.length} vector elements from database. Click to open and edit.`
+                          : `Canvas created on ${new Date(
                               activeSelectedProject.createdAt
-                            ).toLocaleDateString()} with living markdown specification.`
-                          : activeBlueprint.description}
+                            ).toLocaleDateString()}. Click to draw.`}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  /* Blueprint Architecture Diagram Preview */
+                  <div className="flex w-full flex-col items-center justify-center">
+                    <BlueprintDiagramPreview blueprintId={activeBlueprint.id} />
+                    <div className="mt-3 text-center">
+                      <h1 className="text-[20px] font-semibold tracking-[-0.035em] text-[#f4f2ea] sm:text-[23px]">
+                        Systems Blueprint:{" "}
+                        <span className="font-editorial text-white/90">
+                          {activeBlueprint.title}
+                        </span>
+                      </h1>
+                      <p className="mt-1 text-[12px] text-white/50">
+                        {activeBlueprint.description}
                       </p>
                     </div>
                   </div>
@@ -606,7 +986,10 @@ export default function StudioConsole() {
               </div>
 
               {/* Floating Bottom Prompt & Launch Capsule */}
-              <div className="relative z-10 mt-auto pt-2">
+              <div
+                className="relative z-10 mt-auto pt-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <form
                   onSubmit={handleQuickCreate}
                   className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full border border-white/[0.12] bg-[#141615]/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_16px_36px_-12px_rgba(0,0,0,0.85)] backdrop-blur-2xl transition-all focus-within:border-white/25 focus-within:shadow-[0_0_0_3px_rgba(255,255,255,0.06)]"
@@ -778,7 +1161,6 @@ export default function StudioConsole() {
                         <div
                           key={project.projectId}
                           onClick={() => handleSelectProject(project)}
-                          onDoubleClick={() => router.push(`/workspace/${project.projectId}`)}
                           className={`group relative flex cursor-pointer items-center justify-between overflow-hidden rounded-[14px] border p-3 transition-all duration-150 ease-[var(--ease-out)] active:scale-[0.99] ${
                             isSelected
                               ? "border-white/25 bg-white/[0.08] shadow-sm"
@@ -812,13 +1194,15 @@ export default function StudioConsole() {
                           </div>
 
                           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            <Link
-                              href={`/workspace/${project.projectId}`}
+                            <button
+                              type="button"
+                              onClick={() => router.push(`/workspace/${project.projectId}`)}
                               aria-label={`Open ${project.projectName}`}
+                              title="Open in editor"
                               className="flex size-7 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
                             >
                               <ArrowUpRight size={13} />
-                            </Link>
+                            </button>
 
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -831,6 +1215,12 @@ export default function StudioConsole() {
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuItem
+                                  onClick={() => router.push(`/workspace/${project.projectId}`)}
+                                  className="gap-2 text-xs"
+                                >
+                                  <ArrowUpRight size={13} /> Open canvas
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setTargetProject(project);
