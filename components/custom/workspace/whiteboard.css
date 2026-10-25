@@ -26,21 +26,21 @@
 }
 
 .excalidraw.theme--dark {
-    --island-bg-color: rgba(24, 30, 25, 0.86);
+    --island-bg-color: rgba(22, 26, 23, 0.88);
     --shadow-island: inset 0 1px 0 rgba(255, 255, 255, 0.1),
         0 18px 40px -24px rgba(0, 0, 0, 0.8);
     --default-bg-color: #0f1410;
-    --color-primary: #5ee0a4;
-    --color-primary-darker: #48c98b;
-    --color-primary-darkest: #2aab70;
-    --color-primary-light: #8fe0bb;
-    --color-primary-light-darker: #a7e8c8;
-    --color-primary-lightest: #d8f5e6;
-    --color-surface-lowest: #161c17;
-    --color-surface-low: #1d241e;
-    --color-surface-mid: #202820;
-    --color-surface-high: #252d26;
-    --color-surface-primary-container: #1f3a2c;
+    --color-primary: #e4e4e7;
+    --color-primary-darker: #d4d4d8;
+    --color-primary-darkest: #a1a1aa;
+    --color-primary-light: #f4f4f5;
+    --color-primary-light-darker: #e4e4e7;
+    --color-primary-lightest: #ffffff;
+    --color-surface-lowest: #141815;
+    --color-surface-low: #181d19;
+    --color-surface-mid: #1d221e;
+    --color-surface-high: #222823;
+    --color-surface-primary-container: #27272a;
 }
 
 .excalidraw .Island {

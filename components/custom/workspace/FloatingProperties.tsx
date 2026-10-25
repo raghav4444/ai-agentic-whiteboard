@@ -476,7 +476,7 @@ function FloatingProperties({
           side="bottom"
           align="end"
           sideOffset={8}
-          className="z-[9999] w-[280px] overflow-hidden rounded-2xl border border-white/75 bg-[rgba(255,252,245,0.92)] p-0 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/85"
+          className="z-[9999] w-[280px] overflow-hidden rounded-2xl border border-white/75 bg-[rgba(255,252,245,0.92)] p-0 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-[#151916]/95 dark:text-[#f4f2ea]"
         >
           {/* ========================================= */}
           {/* HEADER */}
@@ -628,7 +628,7 @@ function TextOptions({
               onChange={(e) =>
                 onPropertyChange?.("fontSize", Number(e.target.value))
               }
-              className="mt-1 h-8 w-full rounded-lg border border-[#151714]/12 bg-[rgba(255,252,245,0.72)] px-2 text-xs outline-none focus:border-[#2aab70]/50"
+              className="mt-1 h-8 w-full rounded-lg border border-[#151714]/12 bg-[rgba(255,252,245,0.72)] px-2 text-xs outline-none focus:border-black/30 dark:border-white/12 dark:bg-white/[0.04] dark:text-[#f4f2ea] dark:focus:border-white/30"
             >
               <option value={12}>12 px</option>
               <option value={16}>16 px</option>
@@ -946,7 +946,7 @@ function StrokeControls({
         onChange={(e) =>
           onPropertyChange?.("strokeWidth", Number(e.target.value))
         }
-        className="mt-1.5 h-8 w-full rounded-lg border border-[#151714]/12 bg-[rgba(255,252,245,0.72)] px-2 text-xs outline-none focus:border-[#2aab70]/50"
+        className="mt-1.5 h-8 w-full rounded-lg border border-[#151714]/12 bg-[rgba(255,252,245,0.72)] px-2 text-xs outline-none focus:border-black/30 dark:border-white/12 dark:bg-white/[0.04] dark:text-[#f4f2ea] dark:focus:border-white/30"
       >
         <option value={1}>1 px — Thin</option>
         <option value={2}>2 px — Medium</option>
