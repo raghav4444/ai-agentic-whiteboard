@@ -1,10 +1,12 @@
 import React from 'react'
-import StudioConsole from '@/components/custom/dashboard/StudioConsole'
+import WelcomeBanner from '@/components/custom/dashboard/WelcomeBanner'
+import ProjectList from '@/components/custom/dashboard/ProjectList'
 
 function DashboardPage() {
   return (
-    <div className="w-full">
-      <StudioConsole />
+    <div>
+      <WelcomeBanner />
+      <ProjectList />
     </div>
   )
 }
