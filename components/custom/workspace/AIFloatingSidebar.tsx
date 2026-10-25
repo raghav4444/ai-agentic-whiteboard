@@ -22,7 +22,6 @@ import {
 } from "@/lib/icons"
 
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import axios from "axios"
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
@@ -69,9 +68,9 @@ const AiTools = [
     name: "Auto",
     desc: "Infer the right visual",
     icon: Sparkles,
-    color: "text-[#a7e8c8]",
+    color: "text-white/80",
     bgColor: "bg-white/8",
-    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
+    activeRing: "border-white/25 bg-white/12 ring-1 ring-white/15",
     presets: [
       "SaaS architecture with auth, billing & AI",
       "Customer onboarding journey",
@@ -82,37 +81,37 @@ const AiTools = [
     name: "Flowchart",
     desc: "Visualize workflows",
     icon: Workflow,
-    color: "text-[#a7e8c8]",
+    color: "text-white/80",
     bgColor: "bg-white/8",
-    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
+    activeRing: "border-white/25 bg-white/12 ring-1 ring-white/15",
     presets: ["OAuth2 / JWT Token Refresh", "Multi-Step Checkout & Payment", "Support Ticket Incident Escalation"],
   },
   {
     name: "Architecture",
     desc: "Design system architecture",
     icon: Network,
-    color: "text-[#a7e8c8]",
+    color: "text-white/80",
     bgColor: "bg-white/8",
-    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
+    activeRing: "border-white/25 bg-white/12 ring-1 ring-white/15",
     presets: ["Next.js + Neon + Clerk + Redis Stack", "Kubernetes Microservices Mesh", "Kafka Event-Driven Architecture"],
   },
   {
     name: "Web Mockup",
     desc: "Generate web wireframes",
     icon: Monitor,
-    color: "text-[#a7e8c8]",
+    color: "text-white/80",
     bgColor: "bg-white/8",
-    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
-    presets: ["SaaS Analytics Dashboard", "AI Whiteboard Workspace", "E-Commerce Storefront"],
+    activeRing: "border-white/25 bg-white/12 ring-1 ring-white/15",
+    presets: ["SaaS Analytics Dashboard", "Architecture Workspace", "E-Commerce Storefront"],
   },
   {
     name: "Mobile Mockup",
     desc: "Generate app wireframes",
     icon: Smartphone,
-    color: "text-[#a7e8c8]",
+    color: "text-white/80",
     bgColor: "bg-white/8",
-    activeRing: "border-[#5ee0a4]/30 bg-white/12 ring-1 ring-[#5ee0a4]/15",
-    presets: ["Mobile Auth & 2FA Screen", "Crypto Wallet Portfolio", "Real-Time Chat & Activity Feed"],
+    activeRing: "border-white/25 bg-white/12 ring-1 ring-white/15",
+    presets: ["Mobile Auth & 2FA Screen", "Crypto Wallet Portfolio", "Real-Time Activity Feed"],
   },
 ]
 
@@ -523,28 +522,28 @@ export default function AIFloatingSidebar({
       <div className="relative shrink-0 border-b border-white/10 px-4 py-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5ee0a4]/25 bg-[#5ee0a4]/10 text-[#a7e8c8] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/8 text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
               <Sparkles className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-[13px] font-semibold leading-none tracking-[-0.015em] text-[#f7f4eb]">
-                  AI assistant
+                  Visual generator
                 </h2>
-                <span className="glass-chip-dark mono-label inline-flex h-4 items-center gap-1 rounded-full px-1.5 text-[8.5px] text-[#a7e8c8]">
-                  <span className="size-1 rounded-full bg-[#5ee0a4]" />
-                  Live
+                <span className="glass-chip-dark mono-label inline-flex h-4 items-center gap-1 rounded-full px-1.5 text-[8.5px] text-white/70">
+                  <span className="size-1 rounded-full bg-emerald-400" />
+                  Ready
                 </span>
               </div>
               <p className="mono-label mt-1.5 text-white/42">
-                Gemini · canvas-native
+                Canvas-native diagrams
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            aria-label="Close AI assistant"
+            aria-label="Close generator"
             className="flex size-8 cursor-pointer items-center justify-center rounded-full text-white/45 transition-[background-color,color,transform] hover:bg-white/10 hover:text-white active:scale-[0.92] active:bg-white/15"
           >
             <X className="h-4 w-4" />
@@ -561,7 +560,7 @@ export default function AIFloatingSidebar({
             onClick={() => handleQuickAction("explain")}
             disabled={loading}
           >
-            <HelpCircle className="h-3.5 w-3.5 text-[#a7e8c8]" />
+            <HelpCircle className="h-3.5 w-3.5 text-white/60" />
             Explain board
           </Button>
           <Button
@@ -577,29 +576,29 @@ export default function AIFloatingSidebar({
         </div>
 
         {aiTextResult && (
-          <div className="glass-row relative rounded-2xl border-[#5ee0a4]/18 p-3.5 text-xs text-white/70">
-            <div className="mb-2 flex items-center justify-between font-semibold text-[#a7e8c8]">
+          <div className="glass-row relative rounded-2xl border-white/12 p-3.5 text-xs text-white/70">
+            <div className="mb-2 flex items-center justify-between font-semibold text-white/85">
               <span
                 className="flex items-center gap-1.5 text-[10.5px]"
                 title={resultMeta?.model ? `Generated with ${resultMeta.model}` : undefined}
               >
-                <Sparkles className="h-3 w-3 text-[#5ee0a4]" />
-                {resultMeta?.diagramType || "AI notes"}
+                <Sparkles className="h-3 w-3 text-white/70" />
+                {resultMeta?.diagramType || "Notes"}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={handleCopySummary}
                   title="Copy note"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/40 transition-[background-color,color,transform] hover:bg-white/10 hover:text-[#a7e8c8] active:scale-[0.9] active:bg-white/15"
+                  className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/40 transition-[background-color,color,transform] hover:bg-white/10 hover:text-white active:scale-[0.9] active:bg-white/15"
                 >
-                  {copiedText ? <Check className="h-3 w-3 text-[#5ee0a4]" /> : <Copy className="h-3 w-3" />}
+                  {copiedText ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                 </button>
                 <button
                   type="button"
                   onClick={handleSendToSmartDoc}
                   title="Insert into SmartDoc"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/40 transition-[background-color,color,transform] hover:bg-white/10 hover:text-[#a7e8c8] active:scale-[0.9] active:bg-white/15"
+                  className="flex size-7 cursor-pointer items-center justify-center rounded-full text-white/40 transition-[background-color,color,transform] hover:bg-white/10 hover:text-white active:scale-[0.9] active:bg-white/15"
                 >
                   <FileText className="h-3 w-3" />
                 </button>
@@ -657,13 +656,13 @@ export default function AIFloatingSidebar({
                     ${isLastOdd ? "col-span-2" : "col-span-1"}
                     ${
                       isSelected
-                        ? "border-white/20 bg-white/11 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-[#5ee0a4]/15"
+                        ? "border-white/25 bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] ring-1 ring-white/20"
                         : "border-white/8 bg-white/[0.035] hover:border-white/15 hover:bg-white/[0.075]"
                     }
                   `}
                 >
                   {isSelected && (
-                    <span className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-[#5ee0a4]" />
+                    <span className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-white/80" />
                   )}
 
                   <div
@@ -689,7 +688,7 @@ export default function AIFloatingSidebar({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="mono-label flex items-center gap-1.5 text-white/42">
-              <Layers className="h-3 w-3 text-[#a7e8c8]" /> Output depth
+              <Layers className="h-3 w-3 text-white/60" /> Output depth
             </span>
             <div className="glass-segmented-dark flex items-center gap-0.5 p-1 text-[10px]">
               <button
@@ -719,7 +718,7 @@ export default function AIFloatingSidebar({
 
           <div className="mb-2.5 flex items-center justify-between">
             <span className="mono-label flex items-center gap-1.5 text-white/42">
-              <RotateCcw className="h-3 w-3 text-[#a7e8c8]" /> Canvas mode
+              <RotateCcw className="h-3 w-3 text-white/60" /> Canvas mode
             </span>
             <div className="flex items-center gap-1.5">
               <div className="glass-segmented-dark flex items-center gap-0.5 p-1 text-[10px]">
@@ -765,7 +764,7 @@ export default function AIFloatingSidebar({
                 onClick={() => setUserInput(preset)}
                 className="
                   glass-chip-dark h-7 cursor-pointer whitespace-nowrap px-2.5 text-[10px] font-medium
-                  transition-[border-color,color,transform] hover:border-[#5ee0a4]/30 hover:text-[#a7e8c8] active:scale-[0.97]
+                  transition-[border-color,color,transform] hover:border-white/25 hover:text-white active:scale-[0.97]
                 "
               >
                 + {preset}
@@ -773,24 +772,24 @@ export default function AIFloatingSidebar({
             ))}
           </div>
 
-          <div className="relative rounded-2xl border border-white/12 bg-black/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-[border-color,background-color,box-shadow] duration-150 focus-within:border-[#5ee0a4]/35 focus-within:bg-black/26 focus-within:ring-2 focus-within:ring-[#5ee0a4]/10">
-            <Textarea
+          <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_12px_28px_-10px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-[border-color,background-color,box-shadow] duration-150 focus-within:border-white/25 focus-within:bg-white/[0.07] focus-within:ring-2 focus-within:ring-white/10">
+            <textarea
               value={userInput}
               onChange={(event) => setUserInput(event.target.value)}
               onKeyDown={handleKeyDown}
               maxLength={500}
               placeholder="Describe what you want to understand, map, or build..."
               className="
-                min-h-[104px] resize-none border-0 bg-transparent
-                px-3.5 py-3 text-[12.5px] leading-relaxed text-white/88 shadow-none
-                placeholder:text-white/32 focus-visible:ring-0
+                min-h-[104px] w-full resize-none border-0 bg-transparent
+                px-3.5 py-3 text-[12.5px] leading-relaxed text-[#f4f2ea] shadow-none outline-none
+                placeholder:text-white/35 focus:outline-none focus:ring-0
               "
             />
 
             <div className="flex items-center justify-between border-t border-white/8 px-3 py-2">
-              <div className="mono-label flex items-center gap-1.5 text-white/32">
-                <Wand2 className="h-2.5 w-2.5 text-[#a7e8c8]" />
-                <span>Gemini powered</span>
+              <div className="mono-label flex items-center gap-1.5 text-white/35">
+                <Wand2 className="h-2.5 w-2.5 text-white/50" />
+                <span>Studio engine</span>
               </div>
               <span className="mono-label text-white/25">
                 {userInput.length}/500
