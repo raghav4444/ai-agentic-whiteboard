@@ -5,12 +5,11 @@ import {
     SidebarFooter,
     SidebarGroup,
     SidebarHeader,
-    useSidebar,
 } from "@/components/ui/sidebar"
 import Image from "next/image"
 import Link from "next/link"
 import { SidebarGroupLabel, SidebarMenuButton } from "@/components/ui/sidebar"
-import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin, PanelLeft } from "@/lib/icons"
+import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin } from "@/lib/icons"
 import { usePathname } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { UserButton, useUser } from "@clerk/nextjs"
@@ -42,7 +41,6 @@ export function AppSidebar() {
     const path = usePathname();
     const { user } = useUser();
     const { userDetail } = useContext(UserDetailContext) || {};
-    const { toggleSidebar } = useSidebar();
     const [projects, setProjects] = useState<ProjectItem[]>([]);
     const [aiModalOpen, setAiModalOpen] = useState(false);
 
@@ -72,33 +70,22 @@ export function AppSidebar() {
             data-glass-reactive
         >
             <SidebarHeader className="px-4 pt-4 pb-3">
-                <div className="flex items-center justify-between">
-                    <Link
-                        href="/dashboard"
-                        className="group -m-1.5 flex items-center gap-3 rounded-2xl p-1.5 transition-[background-color,transform] duration-150 hover:bg-white/35 active:scale-[0.99]"
-                    >
-                        <span className="flex size-11 shrink-0 items-center justify-center rounded-[15px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,253,247,0.9),rgba(255,250,240,0.5))] shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_22px_-14px_rgba(21,23,20,0.45)] backdrop-blur-md">
-                            <Image src="/logo.svg" alt="ScribeBoard" width={25} height={25} />
+                <Link
+                    href="/dashboard"
+                    className="group -m-1.5 flex items-center gap-3 rounded-2xl p-1.5 transition-[background-color,transform] duration-150 hover:bg-white/35 active:scale-[0.99]"
+                >
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-[15px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,253,247,0.9),rgba(255,250,240,0.5))] shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_22px_-14px_rgba(21,23,20,0.45)] backdrop-blur-md">
+                        <Image src="/logo.svg" alt="ScribeBoard" width={25} height={25} />
+                    </span>
+                    <div className="min-w-0">
+                        <h1 className="truncate text-[15px] font-extrabold leading-none tracking-[-0.05em] text-[#151714]">
+                            Scribe<span className="text-[#2aab70]">Board</span>
+                        </h1>
+                        <span className="mono-label mt-1.5 block text-[#6c726d]/70">
+                            Agentic canvas
                         </span>
-                        <div className="min-w-0">
-                            <h1 className="truncate text-[15px] font-extrabold leading-none tracking-[-0.05em] text-[#151714]">
-                                Scribe<span>Board</span>
-                            </h1>
-                            <span className="mono-label mt-1.5 block text-[#6c726d]/70">
-                                Studio Canvas
-                            </span>
-                        </div>
-                    </Link>
-                    <button
-                        type="button"
-                        onClick={toggleSidebar}
-                        aria-label="Collapse sidebar"
-                        title="Collapse sidebar"
-                        className="flex size-8 items-center justify-center rounded-xl border border-black/8 bg-white/40 text-[#6c726d] transition-colors hover:bg-white/80 hover:text-[#151714] active:scale-95"
-                    >
-                        <PanelLeft size={15} />
-                    </button>
-                </div>
+                    </div>
+                </Link>
             </SidebarHeader>
 
             <SidebarContent className="px-3 pb-2">
@@ -108,7 +95,7 @@ export function AppSidebar() {
                         buttonLabel="New board"
                     />
                     <p className="mt-2.5 px-1 text-center text-[11px] leading-relaxed text-[#6c726d]/65">
-                        A blank canvas with living specifications and diagrams.
+                        A blank canvas with an AI copilot and living spec.
                     </p>
                 </SidebarGroup>
 
@@ -125,8 +112,8 @@ export function AppSidebar() {
                                 <LayoutGrid size={16} />
                                 <span className="text-[12.5px] font-semibold">All boards</span>
                                 {path === "/dashboard" && (
-                                    <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-[#151714]/10">
-                                        <span className="size-1.5 rounded-full bg-[#151714]" />
+                                    <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-[#2aab70]/10">
+                                        <span className="size-1.5 rounded-full bg-[#2aab70]" />
                                     </span>
                                 )}
                             </SidebarMenuButton>
@@ -136,22 +123,22 @@ export function AppSidebar() {
                             <DialogTrigger asChild>
                                 <SidebarMenuButton className="glass-nav-item h-10 cursor-pointer px-3" isActive={false}>
                                     <Sparkles size={16} />
-                                    <span className="text-[12.5px] font-medium">Design blueprints</span>
+                                    <span className="text-[12.5px] font-medium">AI field guide</span>
                                     <span className="mono-label ml-auto text-[#6c726d]/35">?</span>
                                 </SidebarMenuButton>
                             </DialogTrigger>
                             <DialogContent className="max-w-md">
                                 <DialogHeader>
                                     <DialogTitle className="flex items-center gap-3 text-[20px] tracking-[-0.035em]">
-                                        <span className="flex size-9 items-center justify-center rounded-full border border-black/10 bg-black/5 text-[#151714]">
+                                        <span className="flex size-9 items-center justify-center rounded-full border border-[#2aab70]/20 bg-[#2aab70]/10 text-[#065f46]">
                                             <Wand2 size={16} />
                                         </span>
-                                        Architecture Blueprint Guide
+                                        A quieter way to generate
                                     </DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-3 py-1 text-xs">
                                     <p className="text-[13px] leading-relaxed text-[#6c726d]">
-                                        Explore standard patterns for designing distributed architectures and system flows.
+                                        Open any board and use the floating <strong className="font-semibold text-[#151714]">AI assistant</strong> to turn a written idea into a diagram you can edit.
                                     </p>
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
@@ -160,7 +147,7 @@ export function AppSidebar() {
                                             ["Interface sketches", "Desktop and mobile wireframes that stay editable on the canvas."],
                                         ].map(([title, description], index) => (
                                             <div key={title} className="glass-panel-soft flex gap-3 p-3.5">
-                                                <span className="mono-label mt-0.5 text-[#151714]/60">0{index + 1}</span>
+                                                <span className="mono-label mt-0.5 text-[#2aab70]">0{index + 1}</span>
                                                 <div>
                                                     <div className="text-[12px] font-semibold text-[#151714]">{title}</div>
                                                     <div className="mt-1 text-[11px] leading-relaxed text-[#6c726d]">{description}</div>
@@ -219,12 +206,19 @@ export function AppSidebar() {
                         </span>
                         <Link
                             href="/dashboard"
-                            className="flex items-center gap-0.5 text-[10.5px] font-semibold text-[#151714] transition-colors hover:text-black"
+                            className="flex items-center gap-0.5 text-[10.5px] font-semibold text-[#065f46] transition-colors hover:text-[#2aab70]"
                         >
                             View <ArrowUpRight size={11} />
                         </Link>
                     </div>
                     <Progress value={progressValue} className="mt-3 h-1.5" />
+                    <div className="mt-3 flex items-center justify-between border-t border-[#151714]/7 pt-2.5">
+                        <span className="flex items-center gap-1.5 text-[10.5px] text-[#6c726d]">
+                            <Zap size={11} className="text-[#b07b22]" />
+                            {userDetail?.user?.credits ?? 3} AI credits
+                        </span>
+                        <span className="mono-label text-[#6c726d]/45">Gemini</span>
+                    </div>
                 </div>
 
                 <div className="glass-panel-soft mt-0.5 flex items-center gap-2.5 rounded-[14px] px-2.5 py-2">
@@ -237,7 +231,7 @@ export function AppSidebar() {
                             {user?.primaryEmailAddress?.emailAddress}
                         </p>
                     </div>
-                    <span className="size-1.5 rounded-full bg-[#151714]/40" />
+                    <span className="size-1.5 rounded-full bg-[#2aab70]/70" />
                 </div>
 
                 <div className="mt-1 flex items-center justify-between px-0.5">
@@ -247,13 +241,13 @@ export function AppSidebar() {
                         rel="noopener noreferrer"
                         title="Follow on LinkedIn"
                         aria-label="Follow on LinkedIn"
-                        className="group inline-flex min-h-10 items-center gap-1.5 rounded-full px-2 text-[10.5px] font-semibold text-[#6c726d] transition-[color,transform] duration-150 hover:text-[#151714] active:scale-[0.97]"
+                        className="group inline-flex min-h-10 items-center gap-1.5 rounded-full px-2 text-[10.5px] font-semibold text-[#6c726d] transition-[color,transform] duration-150 hover:text-[#065f46] active:scale-[0.97]"
                     >
-                        <Linkedin size={13} className="text-[#151714]" />
+                        <Linkedin size={13} className="text-[#2aab70]" />
                         <span>Follow us</span>
                         <ArrowUpRight
                             size={10}
-                            className="text-[#6c726d]/45 transition-transform duration-150 group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-[#151714]"
+                            className="text-[#6c726d]/45 transition-transform duration-150 group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-[#065f46]"
                         />
                     </a>
 
