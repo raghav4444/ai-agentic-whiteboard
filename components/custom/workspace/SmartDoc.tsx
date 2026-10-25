@@ -1,7 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Sparkles,
   Copy,
@@ -13,79 +12,279 @@ import {
   Code,
   Bold,
   ArrowUpRight,
+  Lock,
 } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import axios from 'axios'
+import type { CollabSession } from './useCollabSession'
+import type { PersistedDoc } from '@/lib/collab/types'
 
-function SmartDoc() {
-  const { projectid } = useParams()
-  const [title, setTitle] = useState("Project Architecture & Requirements")
+const DEFAULT_TITLE = "Project Architecture & Requirements"
+const DEFAULT_CONTENT = `# Architecture & Product Specs
+
+## Overview
+Describe your application goals, target audience, and key performance indicators here.
+
+## Core Architecture
+- **Client Layer**: Next.js App Router with TypeScript
+- **Database Layer**: Neon Serverless Postgres with Drizzle ORM
+- **AI Pipeline**: Gemini for real-time diagram synthesis
+
+## User Journey & Flows
+1. User logs in via Clerk authentication.
+2. Navigates to dashboard and launches a new whiteboard.
+3. Uses AI assistant to generate architecture and flow diagrams.
+4. Documents technical specifications in SmartDoc.
+`
+
+type Props = {
+  session: CollabSession
+  readOnly?: boolean
+}
+
+function signature(title: string, content: string): string {
+  return `${title.length}:${content.length}:${title.slice(0, 32)}:${content.slice(-48)}`
+}
+
+function SmartDoc({ session, readOnly = false }: Props) {
+  const [title, setTitle] = useState(DEFAULT_TITLE)
   const [content, setContent] = useState("")
   const [aiPrompt, setAiPrompt] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [initialized, setInitialized] = useState(false)
+
+  const titleRef = useRef(DEFAULT_TITLE)
+  const contentRef = useRef("")
+  const initializedRef = useRef(false)
+  const appliedRemoteAtRef = useRef(0)
+  const appliedRemoteSignatureRef = useRef("")
+  const lastPushedSignatureRef = useRef("")
+  const dirtyRef = useRef(false)
+  const suppressPushRef = useRef(false)
+  const inFlightRef = useRef(false)
+  const pushAgainRef = useRef(false)
+  const pushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pushDocRef = useRef<() => Promise<void>>(async () => {})
+
+  const projectId = session.projectId
+  const storageKey = `smartdoc_${projectId}`
+  const pushDocToSession = session.pushDoc
+  const reportSyncStatus = session.reportSyncStatus
+  const identityName = session.identity?.name
 
   useEffect(() => {
-    if (!projectid) return
+    titleRef.current = title
+  }, [title])
 
-    // Load the persisted document after the first paint. Doing this in a
-    // microtask keeps hydration deterministic while still restoring local work.
-    const timer = setTimeout(() => {
-      const saved = localStorage.getItem(`smartdoc_${projectid}`)
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved)
-          setTitle(parsed.title || "Project Architecture & Requirements")
-          setContent(parsed.content || "")
-        } catch {
-          setContent(saved)
-        }
-      } else {
-        setContent(
-          `# Architecture & Product Specs\n\n## Overview\nDescribe your application goals, target audience, and key performance indicators here.\n\n## Core Architecture\n- **Client Layer**: Next.js App Router with TypeScript\n- **Database Layer**: Neon Serverless Postgres with Drizzle ORM\n- **AI Pipeline**: Gemini for real-time diagram synthesis\n\n## User Journey & Flows\n1. User logs in via Clerk authentication.\n2. Navigates to dashboard and launches a new whiteboard.\n3. Uses AI assistant to generate architecture and flow diagrams.\n4. Documents technical specifications in SmartDoc.\n`
-        )
+  useEffect(() => {
+    contentRef.current = content
+  }, [content])
+
+  const applyDoc = useCallback((doc: PersistedDoc) => {
+    const nextSignature = signature(doc.title, doc.content)
+    appliedRemoteAtRef.current = Math.max(appliedRemoteAtRef.current, doc.updatedAt)
+    appliedRemoteSignatureRef.current = nextSignature
+    lastPushedSignatureRef.current = nextSignature
+    suppressPushRef.current = true
+    setTitle(doc.title || DEFAULT_TITLE)
+    setContent(doc.content || "")
+    titleRef.current = doc.title || DEFAULT_TITLE
+    contentRef.current = doc.content || ""
+    initializedRef.current = true
+    setInitialized(true)
+    dirtyRef.current = false
+    requestAnimationFrame(() => {
+      suppressPushRef.current = false
+    })
+  }, [])
+
+  // Restore the shared document. The local copy is only a fallback while the
+  // collaboration snapshot is still in flight.
+  /* eslint-disable react-hooks/set-state-in-effect -- Hydrating from the collaboration snapshot and localStorage is an external-store read. */
+  useEffect(() => {
+    if (session.doc) {
+      appliedRemoteSignatureRef.current = signature(
+        session.doc.title,
+        session.doc.content
+      )
+      if (
+        !dirtyRef.current &&
+        (!initializedRef.current ||
+          session.doc.updatedAt > appliedRemoteAtRef.current)
+      ) {
+        applyDoc(session.doc)
+      } else if (!initializedRef.current) {
+        initializedRef.current = true
+        setInitialized(true)
       }
-    }, 0)
+      return
+    }
 
-    return () => clearTimeout(timer)
-  }, [projectid])
+    if (initializedRef.current) return
+    if (session.connection === "connecting") return
+
+    let restored = false
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          title?: string
+          content?: string
+        }
+        setTitle(parsed.title || DEFAULT_TITLE)
+        setContent(parsed.content || DEFAULT_CONTENT)
+        titleRef.current = parsed.title || DEFAULT_TITLE
+        contentRef.current = parsed.content || DEFAULT_CONTENT
+        restored = true
+      }
+    } catch {
+      // A malformed local draft should not block the shared document.
+    }
+
+    if (!restored) {
+      setContent(DEFAULT_CONTENT)
+      contentRef.current = DEFAULT_CONTENT
+    }
+
+    initializedRef.current = true
+    setInitialized(true)
+  }, [applyDoc, session.connection, session.doc, storageKey])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Local cache fallback for offline editing.
+  useEffect(() => {
+    if (!initialized) return
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ title, content, savedAt: Date.now() })
+      )
+    } catch {
+      // Local storage is optional.
+    }
+  }, [content, initialized, storageKey, title])
+
+  const pushDoc = useCallback(async () => {
+    if (readOnly || !initializedRef.current) return
+    if (inFlightRef.current) {
+      pushAgainRef.current = true
+      return
+    }
+
+    const next: PersistedDoc = {
+      title: titleRef.current || DEFAULT_TITLE,
+      content: contentRef.current,
+      updatedAt: Date.now(),
+      updatedBy: identityName || "Teammate",
+    }
+    const nextSignature = signature(next.title, next.content)
+    if (nextSignature === lastPushedSignatureRef.current) {
+      dirtyRef.current = false
+      return
+    }
+
+    inFlightRef.current = true
+    dirtyRef.current = false
+
+    const merged = await pushDocToSession(next)
+    inFlightRef.current = false
+
+    if (merged) {
+      lastPushedSignatureRef.current = signature(merged.title, merged.content)
+      appliedRemoteAtRef.current = Math.max(
+        appliedRemoteAtRef.current,
+        merged.updatedAt
+      )
+
+      if (signature(titleRef.current, contentRef.current) !== nextSignature) {
+        dirtyRef.current = true
+      } else if (
+        merged.content !== contentRef.current ||
+        merged.title !== titleRef.current
+      ) {
+        applyDoc(merged)
+      }
+    } else {
+      dirtyRef.current = true
+      reportSyncStatus("offline")
+    }
+
+    if (pushAgainRef.current) {
+      pushAgainRef.current = false
+      if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
+      pushTimerRef.current = setTimeout(() => {
+        pushTimerRef.current = null
+        void pushDocRef.current()
+      }, 200)
+    }
+  }, [applyDoc, identityName, pushDocToSession, readOnly, reportSyncStatus])
+
+  useEffect(() => {
+    pushDocRef.current = pushDoc
+  }, [pushDoc])
+
+  // Debounced push. Suppressed while a remote document is being applied.
+  useEffect(() => {
+    if (!initialized || readOnly) return
+    if (suppressPushRef.current) return
+
+    const nextSignature = signature(title, content)
+    if (nextSignature === lastPushedSignatureRef.current) return
+
+    dirtyRef.current = true
+    if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
+    pushTimerRef.current = setTimeout(() => {
+      pushTimerRef.current = null
+      void pushDoc()
+    }, 800)
+
+    return () => {
+      if (pushTimerRef.current) {
+        clearTimeout(pushTimerRef.current)
+        pushTimerRef.current = null
+      }
+    }
+  }, [content, initialized, pushDoc, readOnly, title])
 
   useEffect(() => {
     const handleInsert = (event: Event) => {
+      if (readOnly) return
       const detail = (event as CustomEvent<{ content?: string }>).detail
       if (detail?.content) {
         const snippet = detail.content
-        setContent((prev) => prev ? `${prev}\n\n${snippet}` : snippet)
+        setContent((prev) => (prev ? `${prev}\n\n${snippet}` : snippet))
       }
     }
     window.addEventListener("smartdoc:insert-content", handleInsert)
     return () => {
       window.removeEventListener("smartdoc:insert-content", handleInsert)
     }
-  }, [])
+  }, [readOnly])
 
   useEffect(() => {
-    if (!projectid || !content) return
-    const timer = setTimeout(() => {
-      localStorage.setItem(
-        `smartdoc_${projectid}`,
-        JSON.stringify({ title, content })
-      )
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [title, content, projectid])
+    return () => {
+      if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
+    }
+  }, [])
 
   const handleGenerateAiSpecs = async () => {
-    if (!aiPrompt.trim() || loading) return
+    if (readOnly || !aiPrompt.trim() || loading) return
     setLoading(true)
 
     try {
       const res = await axios.post("/api/ai", {
         userInput: aiPrompt.trim(),
         action: "smartdoc",
+        projectId,
+        shareToken: session.shareToken,
+        context: [
+          { type: "document", text: titleRef.current },
+          { type: "document", text: contentRef.current.slice(-2400) },
+        ],
       })
 
       if (res.data?.response) {
@@ -93,13 +292,13 @@ function SmartDoc() {
         setAiPrompt("")
         toast.add({
           type: "success",
-          title: "Documentation Generated",
-          description: "AI specs appended to your SmartDoc.",
+          title: "Documentation generated",
+          description: "AI specs were appended to the shared SmartDoc.",
         })
       } else {
         toast.add({
           type: "error",
-          title: "Generation Failed",
+          title: "Generation failed",
           description: res.data?.detail || res.data?.error || "The AI returned no text.",
         })
       }
@@ -112,7 +311,7 @@ function SmartDoc() {
       const message = typeof data?.error === "string" ? data.error : ""
       toast.add({
         type: "error",
-        title: "Generation Failed",
+        title: "Generation failed",
         description: detail || message || "Could not generate AI documentation.",
       })
     } finally {
@@ -124,7 +323,7 @@ function SmartDoc() {
     try {
       await navigator.clipboard.writeText(content)
       setCopied(true)
-      toast.add({ type: "success", title: "Copied to Clipboard" })
+      toast.add({ type: "success", title: "Copied to clipboard" })
     } catch {
       toast.add({
         type: "error",
@@ -143,12 +342,20 @@ function SmartDoc() {
     link.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, "-")}.md`
     link.click()
     URL.revokeObjectURL(url)
-    toast.add({ type: "success", title: "Downloaded Markdown File" })
+    toast.add({ type: "success", title: "Downloaded markdown file" })
   }
 
   const insertSnippet = (prefix: string, suffix: string = "") => {
+    if (readOnly) return
     setContent((prev) => prev + "\n" + prefix + suffix)
   }
+
+  const syncLabel =
+    session.syncStatus === "offline"
+      ? "Saved locally"
+      : session.syncStatus === "saving"
+        ? "Syncing"
+        : "Live"
 
   return (
     <div className="relative isolate flex h-full w-full flex-col overflow-hidden bg-[#fbfaf6] md:flex-row">
@@ -168,10 +375,27 @@ function SmartDoc() {
               <div className="flex items-center gap-2">
                 <p className="mono-label text-[#2aab70]">SmartDoc · living spec</p>
                 <span className="h-px w-8 bg-[#2aab70]/25" />
-                <span className="mono-label text-[#6c726d]/40">Markdown</span>
+                <span className="mono-label text-[#6c726d]/40">Shared</span>
+                <span className="glass-chip h-6 gap-1 px-2 text-[9.5px] font-semibold text-[#065f46]">
+                  <span
+                    className={`size-1 rounded-full ${
+                      syncLabel === "Saved locally"
+                        ? "bg-[#b07b22]"
+                        : "bg-[#2aab70]"
+                    }`}
+                  />
+                  {syncLabel}
+                </span>
+                {readOnly && (
+                  <span className="glass-chip h-6 gap-1 px-2 text-[9.5px] font-semibold text-[#6c726d]">
+                    <Lock size={9} />
+                    View only
+                  </span>
+                )}
               </div>
               <Input
                 value={title}
+                readOnly={readOnly}
                 onChange={(e) => setTitle(e.target.value)}
                 className="mt-1.5 h-10 max-w-xl border-none bg-transparent px-0 font-editorial-caps text-[25px] leading-none tracking-[-0.04em] text-[#151714] shadow-none focus-visible:ring-0 md:text-[25px]"
               />
@@ -205,6 +429,7 @@ function SmartDoc() {
           <Button
             size="sm"
             variant="ghost"
+            disabled={readOnly}
             className="size-8 p-0"
             onClick={() => insertSnippet("### Section Title")}
             title="Heading"
@@ -214,6 +439,7 @@ function SmartDoc() {
           <Button
             size="sm"
             variant="ghost"
+            disabled={readOnly}
             className="size-8 p-0"
             onClick={() => insertSnippet("**Bold Text**")}
             title="Bold"
@@ -223,6 +449,7 @@ function SmartDoc() {
           <Button
             size="sm"
             variant="ghost"
+            disabled={readOnly}
             className="size-8 p-0"
             onClick={() => insertSnippet("- Feature Item")}
             title="List"
@@ -232,6 +459,7 @@ function SmartDoc() {
           <Button
             size="sm"
             variant="ghost"
+            disabled={readOnly}
             className="size-8 p-0"
             onClick={() => insertSnippet("```ts\nconst data = 1;\n```")}
             title="Code block"
@@ -239,13 +467,18 @@ function SmartDoc() {
             <Code size={14} />
           </Button>
 
-          <span className="mono-label ml-auto text-[#6c726d]/35">Plain text</span>
+          <span className="mono-label ml-auto text-[#6c726d]/35">
+            {session.participants.length > 0
+              ? `${session.participants.length} online`
+              : "Markdown"}
+          </span>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-7">
           <div className="mx-auto max-w-3xl">
             <Textarea
               value={content}
+              readOnly={readOnly}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Type the requirements, decisions and notes that belong beside the diagram..."
               className="min-h-[560px] w-full resize-none border-none bg-transparent p-0 font-mono text-[13.5px] leading-[1.9] text-[#3c423d] shadow-none placeholder:text-[#6c726d]/40 focus-visible:ring-0 md:text-[13.5px]"
@@ -275,14 +508,19 @@ function SmartDoc() {
         <div className="flex-1 overflow-y-auto p-5">
           <Textarea
             value={aiPrompt}
+            disabled={readOnly}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g. Write the technical requirements for a realtime collaborative canvas with presence and autosave."
+            placeholder={
+              readOnly
+                ? "This share link is view-only. Ask the owner for edit access to generate specs."
+                : "e.g. Write the technical requirements for a realtime collaborative canvas with presence and autosave."
+            }
             className="min-h-[132px] resize-none text-[12.5px] leading-relaxed"
           />
 
           <Button
             onClick={handleGenerateAiSpecs}
-            disabled={loading || !aiPrompt.trim()}
+            disabled={readOnly || loading || !aiPrompt.trim()}
             className="mt-3 h-10 w-full gap-2 text-[12px]"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-[#a7e8c8]" />}
@@ -301,8 +539,9 @@ function SmartDoc() {
                 <button
                   key={promptText}
                   type="button"
+                  disabled={readOnly}
                   onClick={() => setAiPrompt(promptText)}
-                  className="group flex w-full cursor-pointer items-start gap-2.5 border-b border-[#151714]/7 py-3 text-left transition-[background-color,color,transform] last:border-b-0 hover:text-[#065f46] active:translate-y-px"
+                  className="group flex w-full cursor-pointer items-start gap-2.5 border-b border-[#151714]/7 py-3 text-left transition-[background-color,color,transform] last:border-b-0 hover:text-[#065f46] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <span className="mono-label mt-0.5 text-[#2aab70]/65">0{index + 1}</span>
                   <span className="flex-1 text-[11.5px] leading-relaxed text-[#6c726d] transition-colors group-hover:text-[#065f46]">
@@ -317,7 +556,8 @@ function SmartDoc() {
 
         <div className="border-t border-[#151714]/8 p-5">
           <p className="text-[10.5px] leading-relaxed text-[#6c726d]/60">
-            SmartDoc is stored with this board&apos;s canvas, so the diagram and its reasoning travel together.
+            SmartDoc is stored with this board&apos;s shared session, so every
+            editor sees the same spec beside the diagram.
           </p>
         </div>
       </aside>
