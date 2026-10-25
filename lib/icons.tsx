@@ -5,11 +5,11 @@ import type { ForwardRefExoticComponent, RefAttributes, SVGProps } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type { HugeiconsIconProps, IconSvgElement } from '@hugeicons/react';
 import {
-  Add01Icon, AiBrain01Icon, Alert02Icon, ArrowDown01Icon, ArrowDown02Icon,
+  Activity01Icon, Add01Icon, AiBrain01Icon, Alert02Icon, ArrowDown01Icon, ArrowDown02Icon,
   ArrowDownToLineIcon, ArrowLeft01Icon, ArrowLeft02Icon, ArrowRight01Icon,
   ArrowRight02Icon, ArrowUp01Icon, ArrowUp02Icon, ArrowUpRight01Icon,
   ArrowUpToLineIcon, BulbIcon, Calendar01Icon, Cancel01Icon,
-  CheckmarkCircle02Icon, CircleDotIcon, CircleIcon, ComputerIcon, Copy01Icon,
+  CheckmarkCircle02Icon, CircleDotIcon, CircleIcon, Clock01Icon, ComputerIcon, Copy01Icon,
   CubeIcon, Cursor01Icon, Delete02Icon, DiamondIcon, Download01Icon,
   DiscordIcon, DragDropVerticalIcon, DropletIcon, EraserIcon, File01Icon, FileScriptIcon,
   FloppyDiskIcon, Folder01Icon, GitBranchIcon, GithubIcon, Globe02Icon, GridViewIcon,
@@ -77,6 +77,8 @@ export const OctagonX = /* @__PURE__ */ createIcon(OctagonXData, 'error');
 export const Loader2 = /* @__PURE__ */ createIcon(Loading03Icon, 'loading');
 export const Search = /* @__PURE__ */ createIcon(Search01Icon, 'search');
 export const Plus = /* @__PURE__ */ createIcon(Add01Icon, 'add');
+export const Activity = /* @__PURE__ */ createIcon(Activity01Icon, 'activity');
+export const Clock = /* @__PURE__ */ createIcon(Clock01Icon, 'clock');
 export const Minus = /* @__PURE__ */ createIcon(MinusSignIcon, 'minus');
 export const MoreHorizontal = /* @__PURE__ */ createIcon(MoreHorizontalData, 'more-horizontal');
 export const MoreVertical = /* @__PURE__ */ createIcon(MoreVerticalIcon, 'more-vertical');
