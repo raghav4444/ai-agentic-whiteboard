@@ -46,7 +46,7 @@ function WelcomeBanner() {
             {/* Light moving through smoked glass. */}
             <div
                 aria-hidden
-                className="hero-light pointer-events-none absolute -left-32 -top-36 size-[26rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(42,171,112,0.42),transparent_68%)] blur-2xl"
+                className="hero-light pointer-events-none absolute -left-32 -top-36 size-[26rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(252,246,232,0.2),transparent_68%)] blur-2xl"
             />
             <div
                 aria-hidden
@@ -64,14 +64,7 @@ function WelcomeBanner() {
 
             <div className="relative z-10 grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
                 <div className="max-w-2xl">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="size-1.5 rounded-full bg-[#5ee0a4] shadow-[0_0_0_4px_rgba(94,224,164,0.12)]" />
-                        <span className="mono-label text-[#a7e8c8]">AI-assisted systems thinking</span>
-                        <span className="hidden h-px w-10 bg-white/20 sm:block" />
-                        <span className="mono-label hidden text-white/40 sm:block">Studio</span>
-                    </div>
-
-                    <h1 className="mt-5 text-[2.3rem] font-semibold leading-[0.95] tracking-[-0.058em] text-[#f7f4eb] sm:text-[3rem] lg:text-[3.5rem]">
+                    <h1 className="text-[2.3rem] font-semibold leading-[0.95] tracking-[-0.058em] text-[#f7f4eb] sm:text-[3rem] lg:text-[3.5rem]">
                         {greeting},<br />
                         <span className="font-editorial text-[#a7e8c8]">{user?.firstName || "creator"}.</span>
                     </h1>

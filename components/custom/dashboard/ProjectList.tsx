@@ -165,7 +165,7 @@ function ProjectList() {
         <div className="glass-panel-soft relative mt-2 flex flex-col items-center justify-center overflow-hidden p-12 text-center sm:p-16">
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 size-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(42,171,112,0.11),transparent_66%)] blur-2xl"
+            className="pointer-events-none absolute left-1/2 top-1/2 size-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(229,196,119,0.12),transparent_66%)] blur-2xl"
           />
           <div className="relative flex size-12 items-center justify-center rounded-full border border-[#2aab70]/18 bg-[#2aab70]/8 text-[#065f46]">
             <Folder size={20} />
