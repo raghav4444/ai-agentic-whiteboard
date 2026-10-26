@@ -1,5 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { db, projects } from "@/db";
 import { createShareToken } from "@/lib/collab/token";
@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
         userEmail: projects.userEmail,
       })
       .from(projects)
-      .where(eq(projects.projectId, projectId))
+      .where(
+        and(eq(projects.projectId, projectId), isNull(projects.deletedAt))
+      )
       .limit(1);
 
     const project = rows[0];

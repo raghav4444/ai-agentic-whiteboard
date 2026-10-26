@@ -1,7 +1,25 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { db, WhiteboardData } from "@/db";
-import { eq } from "drizzle-orm";
+import { db, projects, WhiteboardData } from "@/db";
+import { and, eq, isNull } from "drizzle-orm";
+
+async function ownsActiveProject(
+  projectId: string,
+  userEmail: string
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.projectId, projectId),
+        eq(projects.userEmail, userEmail),
+        isNull(projects.deletedAt)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,6 +33,11 @@ export async function GET(req: NextRequest) {
 
     if (!projectId) {
       return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
+    }
+
+    const userEmail = user.primaryEmailAddress?.emailAddress ?? "";
+    if (!(await ownsActiveProject(projectId, userEmail))) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     const result = await db
@@ -49,6 +72,11 @@ export async function POST(req: NextRequest) {
 
     if (!projectId) {
       return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
+    }
+
+    const userEmail = user.primaryEmailAddress?.emailAddress ?? "";
+    if (!(await ownsActiveProject(projectId, userEmail))) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     const result = await db

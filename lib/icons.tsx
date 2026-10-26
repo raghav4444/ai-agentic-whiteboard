@@ -22,7 +22,7 @@ import {
   PencilRulerIcon, PlayIcon as PlayData, RotateLeft01Icon, Search01Icon, SidebarLeftIcon,
   Share01Icon, SmartPhone01Icon, SourceCodeIcon, SquareIcon, Target01Icon, TextAlignCenterIcon,
   TextAlignLeftIcon, TextAlignRightIcon, TextBoldIcon, TextIcon, Tick02Icon,
-  TypeCursorIcon, VolumeHighIcon, VolumeOffIcon, WorkflowSquare01Icon, FlashIcon,
+  TypeCursorIcon, ViewIcon, VolumeHighIcon, VolumeOffIcon, WorkflowSquare01Icon, FlashIcon,
 } from '@hugeicons/core-free-icons';
 
 export type IconProps = Omit<HugeiconsIconProps, 'icon' | 'strokeWidth'> & { strokeWidth?: SVGProps<SVGSVGElement>['strokeWidth'] };
@@ -76,6 +76,7 @@ export const TriangleAlert = /* @__PURE__ */ createIcon(Alert02Icon, 'warning');
 export const OctagonX = /* @__PURE__ */ createIcon(OctagonXData, 'error');
 export const Loader2 = /* @__PURE__ */ createIcon(Loading03Icon, 'loading');
 export const Search = /* @__PURE__ */ createIcon(Search01Icon, 'search');
+export const Eye = /* @__PURE__ */ createIcon(ViewIcon, 'view');
 export const Plus = /* @__PURE__ */ createIcon(Add01Icon, 'add');
 export const Activity = /* @__PURE__ */ createIcon(Activity01Icon, 'activity');
 export const Clock = /* @__PURE__ */ createIcon(Clock01Icon, 'clock');

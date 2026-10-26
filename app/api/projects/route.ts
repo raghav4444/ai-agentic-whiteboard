@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db, projects, WhiteboardData } from "@/db";
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { invalidateProjectAccess } from "@/lib/collab/access";
+
+function isTruthyParam(value: string | null): boolean {
+  return value === "1" || value === "true";
+}
+
+function currentEmail(user: Awaited<ReturnType<typeof currentUser>>): string {
+  return user?.primaryEmailAddress?.emailAddress ?? "";
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,12 +21,20 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("projectId") || searchParams.get("projectid");
+    const userEmail = currentEmail(user);
 
     if (projectId) {
       const project = await db
         .select()
         .from(projects)
-        .where(eq(projects.projectId, projectId));
+        .where(
+          and(
+            eq(projects.projectId, projectId),
+            eq(projects.userEmail, userEmail),
+            isNull(projects.deletedAt)
+          )
+        )
+        .limit(1);
 
       if (!project || project.length === 0) {
         return NextResponse.json({ message: "Project not found" }, { status: 404 });
@@ -26,12 +43,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(project[0], { status: 200 });
     }
 
-    const userEmail = user?.primaryEmailAddress?.emailAddress ?? "";
+    const isTrash = isTruthyParam(
+      searchParams.get("trash") ?? searchParams.get("deleted")
+    );
+
     const userProjects = await db
       .select()
       .from(projects)
-      .where(eq(projects.userEmail, userEmail))
-      .orderBy(desc(projects.createdAt));
+      .where(
+        and(
+          eq(projects.userEmail, userEmail),
+          isTrash ? isNotNull(projects.deletedAt) : isNull(projects.deletedAt)
+        )
+      )
+      .orderBy(isTrash ? desc(projects.deletedAt) : desc(projects.createdAt));
 
     return NextResponse.json(userProjects, { status: 200 });
   } catch (error) {
@@ -62,7 +87,7 @@ export async function POST(req: NextRequest) {
       .values({
         projectId: projectId,
         projectName: projectName ?? "Untitled Project",
-        userEmail: user?.primaryEmailAddress?.emailAddress ?? "",
+        userEmail: currentEmail(user),
       })
       .returning();
 
@@ -90,16 +115,77 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "Missing projectId" }, { status: 400 });
     }
 
-    await db
-      .delete(WhiteboardData)
-      .where(eq(WhiteboardData.projectId, projectId));
+    const userEmail = currentEmail(user);
+    const permanent = isTruthyParam(searchParams.get("permanent"));
 
-    const deleted = await db
-      .delete(projects)
-      .where(eq(projects.projectId, projectId))
+    if (permanent) {
+      // Only boards already in the recycle bin can be permanently removed.
+      const trashed = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(
+          and(
+            eq(projects.projectId, projectId),
+            eq(projects.userEmail, userEmail),
+            isNotNull(projects.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (trashed.length === 0) {
+        return NextResponse.json(
+          { message: "Project is not in the recycle bin" },
+          { status: 404 }
+        );
+      }
+
+      await db
+        .delete(WhiteboardData)
+        .where(eq(WhiteboardData.projectId, projectId));
+
+      await db
+        .delete(projects)
+        .where(
+          and(
+            eq(projects.projectId, projectId),
+            eq(projects.userEmail, userEmail),
+            isNotNull(projects.deletedAt)
+          )
+        );
+
+      invalidateProjectAccess(projectId);
+
+      return NextResponse.json(
+        { message: "Project permanently deleted" },
+        { status: 200 }
+      );
+    }
+
+    const trashed = await db
+      .update(projects)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(projects.projectId, projectId),
+          eq(projects.userEmail, userEmail),
+          isNull(projects.deletedAt)
+        )
+      )
       .returning();
 
-    return NextResponse.json({ message: "Project deleted successfully", deleted }, { status: 200 });
+    if (trashed.length === 0) {
+      return NextResponse.json(
+        { message: "Project is not in your active library" },
+        { status: 404 }
+      );
+    }
+
+    invalidateProjectAccess(projectId);
+
+    return NextResponse.json(
+      { message: "Project moved to recycle bin", project: trashed[0] },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error deleting project:", error);
     return NextResponse.json(
@@ -117,17 +203,61 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { projectId, projectName } = body;
+    const projectId =
+      typeof body?.projectId === "string" ? body.projectId.trim() : "";
+    const userEmail = currentEmail(user);
 
-    if (!projectId || !projectName) {
+    if (!projectId) {
+      return NextResponse.json({ message: "Missing Required Data" }, { status: 400 });
+    }
+
+    if (body?.restore === true) {
+      const restored = await db
+        .update(projects)
+        .set({ deletedAt: null })
+        .where(
+          and(
+            eq(projects.projectId, projectId),
+            eq(projects.userEmail, userEmail),
+            isNotNull(projects.deletedAt)
+          )
+        )
+        .returning();
+
+      if (restored.length === 0) {
+        return NextResponse.json(
+          { message: "Project is not in the recycle bin" },
+          { status: 404 }
+        );
+      }
+
+      invalidateProjectAccess(projectId);
+
+      return NextResponse.json(restored[0], { status: 200 });
+    }
+
+    const projectName =
+      typeof body?.projectName === "string" ? body.projectName.trim() : "";
+
+    if (!projectName) {
       return NextResponse.json({ message: "Missing Required Data" }, { status: 400 });
     }
 
     const updated = await db
       .update(projects)
       .set({ projectName })
-      .where(eq(projects.projectId, projectId))
+      .where(
+        and(
+          eq(projects.projectId, projectId),
+          eq(projects.userEmail, userEmail),
+          isNull(projects.deletedAt)
+        )
+      )
       .returning();
+
+    if (updated.length === 0) {
+      return NextResponse.json({ message: "Project not found" }, { status: 404 });
+    }
 
     return NextResponse.json(updated[0], { status: 200 });
   } catch (error) {

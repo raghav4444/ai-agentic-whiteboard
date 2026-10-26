@@ -1,5 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db, projects } from "@/db";
 import { colorForIdentity } from "./merge";
 import { verifyShareToken } from "./token";
@@ -40,6 +40,11 @@ type CachedProject = {
 
 const projectCache = new Map<string, CachedProject>();
 const PROJECT_CACHE_MS = 20_000;
+
+/** Drop cached ownership data after a rename, trash, restore or purge. */
+export function invalidateProjectAccess(projectId: string): void {
+  projectCache.delete(projectId);
+}
 
 export function cleanClientId(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -84,7 +89,9 @@ async function loadProject(projectId: string): Promise<CachedProject> {
         userEmail: projects.userEmail,
       })
       .from(projects)
-      .where(eq(projects.projectId, projectId))
+      .where(
+        and(eq(projects.projectId, projectId), isNull(projects.deletedAt))
+      )
       .limit(1);
 
     if (!rows[0]) {
@@ -168,9 +175,25 @@ export async function resolveCollabAccess(
         via = "owner";
       }
     } catch (error) {
+      // A deleted board must stay closed even when someone holds an old link.
+      if (error instanceof CollabAccessError && error.status === 404) {
+        throw error;
+      }
       // A valid share link is enough to keep collaborating during a database
       // hiccup. Without one, the owner check cannot be trusted.
       if (!shareMatches) {
+        throw error;
+      }
+    }
+  } else if (shareMatches) {
+    // Guests do not have a Clerk session, so verify that the shared board has
+    // not been moved to the recycle bin. If the database is unavailable we keep
+    // the signed token usable against the in-memory collaboration hub.
+    try {
+      const project = await loadProject(projectId);
+      projectName = project.projectName || projectName;
+    } catch (error) {
+      if (error instanceof CollabAccessError && error.status === 404) {
         throw error;
       }
     }

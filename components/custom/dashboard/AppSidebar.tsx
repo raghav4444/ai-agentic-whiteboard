@@ -9,8 +9,8 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { SidebarGroupLabel, SidebarMenuButton } from "@/components/ui/sidebar"
-import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin } from "@/lib/icons"
-import { usePathname } from "next/navigation"
+import { LayoutGrid, Sparkles, Folder, Wand2, Zap, ArrowUpRight, Discord, Github, Linkedin, Trash2 } from "@/lib/icons"
+import { usePathname, useSearchParams } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { UserButton, useUser } from "@clerk/nextjs"
 import CreateNewBoardDialog from "./CreateNewBoardDialog"
@@ -39,23 +39,40 @@ const SOCIAL_LINKS = {
 
 export function AppSidebar() {
     const path = usePathname();
+    const searchParams = useSearchParams();
     const { user } = useUser();
     const { userDetail } = useContext(UserDetailContext) || {};
     const [projects, setProjects] = useState<ProjectItem[]>([]);
+    const [trashCount, setTrashCount] = useState(0);
     const [aiModalOpen, setAiModalOpen] = useState(false);
+    const isTrashView = path === "/dashboard" && searchParams.get("view") === "trash";
 
     useEffect(() => {
-        const fetchUserProjects = async () => {
+        const refreshProjects = async () => {
             try {
-                const res = await axios.get("/api/projects");
-                if (Array.isArray(res.data)) {
-                    setProjects(res.data);
+                const [activeRes, trashRes] = await Promise.all([
+                    axios.get("/api/projects"),
+                    axios.get("/api/projects?trash=1"),
+                ]);
+                if (Array.isArray(activeRes.data)) {
+                    setProjects(activeRes.data);
+                }
+                if (Array.isArray(trashRes.data)) {
+                    setTrashCount(trashRes.data.length);
                 }
             } catch (e) {
                 console.error(e);
             }
         };
-        fetchUserProjects();
+
+        void refreshProjects();
+        const handleLibraryChange = () => {
+            void refreshProjects();
+        };
+        window.addEventListener("scribeboard:library-changed", handleLibraryChange);
+        return () => {
+            window.removeEventListener("scribeboard:library-changed", handleLibraryChange);
+        };
     }, []);
 
     const maxFreeBoards = 10;
@@ -107,13 +124,28 @@ export function AppSidebar() {
                         <Link href="/dashboard" className="block">
                             <SidebarMenuButton
                                 className="glass-nav-item h-10 cursor-pointer px-3"
-                                isActive={path === "/dashboard"}
+                                isActive={path === "/dashboard" && !isTrashView}
                             >
                                 <LayoutGrid size={16} />
                                 <span className="text-[12.5px] font-semibold">All boards</span>
-                                {path === "/dashboard" && (
+                                {path === "/dashboard" && !isTrashView && (
                                     <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-[#2aab70]/10">
                                         <span className="size-1.5 rounded-full bg-[#2aab70]" />
+                                    </span>
+                                )}
+                            </SidebarMenuButton>
+                        </Link>
+
+                        <Link href="/dashboard?view=trash" className="block">
+                            <SidebarMenuButton
+                                className="glass-nav-item h-10 cursor-pointer px-3"
+                                isActive={isTrashView}
+                            >
+                                <Trash2 size={16} />
+                                <span className="text-[12.5px] font-medium">Recycle bin</span>
+                                {trashCount > 0 && (
+                                    <span className="ml-auto flex min-w-5 items-center justify-center rounded-full border border-[#151714]/7 bg-[#2aab70]/8 px-1.5 py-0.5 text-[9.5px] tabular-nums text-[#065f46]">
+                                        {trashCount}
                                     </span>
                                 )}
                             </SidebarMenuButton>
