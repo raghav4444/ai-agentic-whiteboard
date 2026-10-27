@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { colorForIdentity, initialsForName } from "@/lib/collab/merge";
 import type { CollabSession } from "./useCollabSession";
 
@@ -64,8 +62,8 @@ export default function PresenceBar({ session }: { session: CollabSession }) {
       </span>
 
       {participants.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
             <button
               type="button"
               aria-label={`Show ${participants.length} people on this board`}
@@ -91,47 +89,49 @@ export default function PresenceBar({ session }: { session: CollabSession }) {
                 )}
               </span>
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuLabel className="flex items-center justify-between">
-              <span>On this board</span>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 gap-0 p-2.5">
+            <div className="flex items-center justify-between px-1.5 pb-2">
+              <span className="text-[11.5px] font-semibold text-[#151714]">On this board</span>
               <span className="text-[10px] font-medium text-[#6c726d]">
                 {participants.length} online
               </span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {participants.map((participant) => {
-              const isSelf = participant.clientId === session.clientId;
-              return (
-                <div
-                  key={participant.clientId}
-                  className="flex items-center gap-2.5 px-2 py-2"
-                >
-                  <Avatar
-                    name={participant.name}
-                    identityId={participant.identityId || participant.clientId}
-                    size="sm"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11.5px] font-semibold text-[#151714]">
-                      {participant.name}
-                      {isSelf ? " (you)" : ""}
-                    </p>
-                    <p className="text-[10px] text-[#6c726d]">
-                      {isSelf ? "This tab" : "Editing now"}
-                    </p>
+            </div>
+            <div className="my-1 h-px bg-[#151714]/10 dark:bg-white/10" />
+            <div className="flex flex-col gap-0.5 pt-1">
+              {participants.map((participant) => {
+                const isSelf = participant.clientId === session.clientId;
+                return (
+                  <div
+                    key={participant.clientId}
+                    className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-[#151714]/5 dark:hover:bg-white/5"
+                  >
+                    <Avatar
+                      name={participant.name}
+                      identityId={participant.identityId || participant.clientId}
+                      size="sm"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11.5px] font-semibold text-[#151714] dark:text-[#f4f2ea]">
+                        {participant.name}
+                        {isSelf ? " (you)" : ""}
+                      </p>
+                      <p className="text-[10px] text-[#6c726d]">
+                        {isSelf ? "This tab" : "Editing now"}
+                      </p>
+                    </div>
+                    <span className="size-1.5 rounded-full bg-[#2aab70]" />
                   </div>
-                  <span className="size-1.5 rounded-full bg-[#2aab70]" />
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
             {participants.length === 1 && (
-              <p className="px-2 pb-1.5 pt-1 text-[10.5px] leading-relaxed text-[#6c726d]">
+              <p className="px-2 pt-2 text-[10.5px] leading-relaxed text-[#6c726d]">
                 Share the link to bring someone else onto the canvas.
               </p>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </PopoverContent>
+        </Popover>
       )}
     </div>
   );

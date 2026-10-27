@@ -58,23 +58,23 @@ export function createShareToken(input: {
 }
 
 export function verifyShareToken(token: unknown): ShareTokenPayload | null {
-  if (typeof token !== "string") return null;
-  const trimmed = token.trim();
-  if (!trimmed || trimmed.length > MAX_TOKEN_LENGTH) return null;
-
-  const separator = trimmed.lastIndexOf(".");
-  if (separator <= 0 || separator === trimmed.length - 1) return null;
-
-  const encoded = trimmed.slice(0, separator);
-  const providedSignature = trimmed.slice(separator + 1);
-  const expectedSignature = sign(encoded);
-
-  const provided = Buffer.from(providedSignature, "utf8");
-  const expected = Buffer.from(expectedSignature, "utf8");
-  if (provided.length !== expected.length) return null;
-  if (!timingSafeEqual(provided, expected)) return null;
-
   try {
+    if (typeof token !== "string") return null;
+    const trimmed = token.trim();
+    if (!trimmed || trimmed.length > MAX_TOKEN_LENGTH) return null;
+
+    const separator = trimmed.lastIndexOf(".");
+    if (separator <= 0 || separator === trimmed.length - 1) return null;
+
+    const encoded = trimmed.slice(0, separator);
+    const providedSignature = trimmed.slice(separator + 1);
+    const expectedSignature = sign(encoded);
+
+    const provided = Buffer.from(providedSignature, "utf8");
+    const expected = Buffer.from(expectedSignature, "utf8");
+    if (provided.length !== expected.length) return null;
+    if (!timingSafeEqual(provided, expected)) return null;
+
     const parsed = JSON.parse(
       Buffer.from(encoded, "base64url").toString("utf8")
     ) as Partial<ShareTokenPayload>;
