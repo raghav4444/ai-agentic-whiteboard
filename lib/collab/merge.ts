@@ -147,7 +147,11 @@ export function sanitizeElements(value: unknown): ExcalidrawElement[] {
       element.id.length > 160 ||
       typeof element.type !== "string" ||
       !ELEMENT_TYPES.has(element.type) ||
-      seen.has(element.id)
+      seen.has(element.id) ||
+      element.id.startsWith("ai-generation-placeholder") ||
+      (typeof (element as unknown as { text?: unknown }).text === "string" &&
+        ((element as unknown as { text: string }).text.includes("Thinking through the structure") ||
+         (element as unknown as { text: string }).text.includes("Synthesizing nodes")))
     ) {
       continue;
     }

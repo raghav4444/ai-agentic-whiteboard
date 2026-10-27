@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import {
   Sparkles,
   X,
@@ -133,9 +133,47 @@ export default function AIFloatingSidebar({
     model?: string
   } | null>(null)
   const [detailLevel, setDetailLevel] = useState<"standard" | "enterprise">("enterprise")
-  const [canvasMode, setCanvasMode] = useState<"replace" | "append">("replace")
+  const [canvasMode, setCanvasMode] = useState<"replace" | "append">("append")
   const [copiedText, setCopiedText] = useState(false)
   const placeholderIdsRef = useRef<string[]>([])
+
+  const purgeStalePlaceholders = useCallback(() => {
+    if (!excalidrawApi) return
+    try {
+      const elements = excalidrawApi.getSceneElements()
+      let hasStale = false
+      const updated = elements.map((el) => {
+        const textVal = typeof (el as unknown as { text?: unknown }).text === "string"
+          ? (el as unknown as { text: string }).text
+          : ""
+        if (
+          el.id.startsWith("ai-generation-placeholder") ||
+          placeholderIdsRef.current.includes(el.id) ||
+          textVal.includes("Thinking through the structure") ||
+          textVal.includes("Synthesizing nodes")
+        ) {
+          hasStale = true
+          return {
+            ...el,
+            isDeleted: true,
+            version: (el.version || 1) + 1,
+            updated: Date.now(),
+          }
+        }
+        return el
+      })
+      if (hasStale) {
+        excalidrawApi.updateScene({ elements: updated })
+      }
+      placeholderIdsRef.current = []
+    } catch (e) {
+      console.error(e)
+    }
+  }, [excalidrawApi])
+
+  useEffect(() => {
+    purgeStalePlaceholders()
+  }, [purgeStalePlaceholders])
 
   const getTargetCanvasPosition = (): { x: number; y: number } => {
     if (!excalidrawApi || canvasMode === "replace") {
@@ -144,93 +182,54 @@ export default function AIFloatingSidebar({
 
     const elements = excalidrawApi
       .getSceneElements()
-      .filter((element) => !element.isDeleted && !element.id.startsWith("ai-generation-placeholder"))
+      .filter((element) => {
+        if (element.isDeleted || element.id.startsWith("ai-generation-placeholder")) return false
+        const textVal = typeof (element as unknown as { text?: unknown }).text === "string"
+          ? (element as unknown as { text: string }).text
+          : ""
+        if (textVal.includes("Thinking through the structure") || textVal.includes("Synthesizing nodes")) return false
+        return true
+      })
 
     if (elements.length === 0) {
       return { x: 80, y: 100 }
     }
 
-    const maxRight = Math.max(
-      ...elements.map((element) => element.x + (element.width || 0))
-    )
-    const minTop = Math.min(...elements.map((element) => element.y))
+    const rightEdges = elements
+      .map((el) => {
+        const x = Number(el.x) || 0
+        const w = Number(el.width) || 0
+        return Math.max(x, x + w)
+      })
+      .filter(Number.isFinite)
+
+    const topEdges = elements
+      .map((el) => {
+        const y = Number(el.y) || 0
+        const h = Number(el.height) || 0
+        return Math.min(y, y + h)
+      })
+      .filter(Number.isFinite)
+
+    const maxRight = rightEdges.length > 0 ? Math.max(...rightEdges) : 0
+    const minTop = topEdges.length > 0 ? Math.min(...topEdges) : 100
 
     return {
       x: maxRight + 120,
-      y: Math.max(50, minTop),
-    }
-  }
-
-  const addAiPlaceholder = async (position: { x: number; y: number }) => {
-    if (!excalidrawApi) return
-
-    try {
-      const { convertToExcalidrawElements } = await import("@excalidraw/excalidraw")
-      const placeholderElements = convertToExcalidrawElements([
-        {
-          type: "rectangle",
-          id: "ai-generation-placeholder-card",
-          x: position.x,
-          y: position.y,
-          width: 380,
-          height: 180,
-          backgroundColor: "#f2f8f3",
-          strokeColor: "#2aab70",
-          fillStyle: "solid",
-          strokeWidth: 1.5,
-          roughness: 0,
-          roundness: { type: 3 },
-        },
-        {
-          type: "text",
-          id: "ai-generation-placeholder-t1",
-          x: position.x + 24,
-          y: position.y + 30,
-          text: "Thinking through the structure...",
-          fontSize: 16,
-          strokeColor: "#065f46",
-        },
-        {
-          type: "text",
-          id: "ai-generation-placeholder-t2",
-          x: position.x + 24,
-          y: position.y + 64,
-          text: "Synthesizing nodes, relationships & layout",
-          fontSize: 12,
-          strokeColor: "#6c726d",
-        },
-      ])
-
-      placeholderIdsRef.current = placeholderElements.map((el) => el.id)
-      const current = excalidrawApi.getSceneElements().filter((el) => !el.id.startsWith("ai-generation-placeholder"))
-      excalidrawApi.updateScene({
-        elements: [...current, ...placeholderElements],
-      })
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  const removeAiPlaceholder = () => {
-    if (!excalidrawApi) return
-    try {
-      const elements = excalidrawApi
-        .getSceneElements()
-        .filter((el) => {
-          if (el.id.startsWith("ai-generation-placeholder")) return false
-          if (placeholderIdsRef.current.includes(el.id)) return false
-          return true
-        })
-      excalidrawApi.updateScene({ elements })
-      placeholderIdsRef.current = []
-    } catch (e) {
-      console.error(e)
+      y: Math.max(80, minTop),
     }
   }
 
   const handleClearCanvas = () => {
     if (!excalidrawApi) return
-    excalidrawApi.updateScene({ elements: [] })
+    const currentElements = excalidrawApi.getSceneElements()
+    const cleared = currentElements.map((el) => ({
+      ...el,
+      isDeleted: true,
+      version: (el.version || 1) + 1,
+      updated: Date.now(),
+    }))
+    excalidrawApi.updateScene({ elements: cleared })
     toast.add({
       type: "info",
       title: "Canvas Reset",
@@ -266,7 +265,7 @@ export default function AIFloatingSidebar({
       .filter((item) => item.text.trim().length > 0)
 
     const targetPos = getTargetCanvasPosition()
-    await addAiPlaceholder(targetPos)
+    purgeStalePlaceholders()
 
     try {
       const result = await axios.post("/api/ai", {
@@ -279,7 +278,7 @@ export default function AIFloatingSidebar({
         ...(boardContext.length > 0 ? { context: boardContext } : {}),
       })
 
-      removeAiPlaceholder()
+      purgeStalePlaceholders()
 
       if (result.data?.elements && Array.isArray(result.data.elements) && result.data.elements.length > 0) {
         const rawElements = result.data.elements as GeneratedElement[]
@@ -327,18 +326,42 @@ export default function AIFloatingSidebar({
           throw new Error("The generated diagram had no usable elements.")
         }
 
-        const cleanExisting = excalidrawApi.getSceneElements().filter((e) => {
-          if (e.isDeleted) return false
-          if (e.id.startsWith("ai-generation-placeholder")) return false
-          if (placeholderIdsRef.current.includes(e.id)) return false
-          return true
-        })
+        const currentElements = excalidrawApi.getSceneElements()
+        let finalSceneElements: unknown[]
 
-        const finalSceneElements =
-          requestedCanvasMode === "replace" ? converted : [...cleanExisting, ...converted]
+        if (requestedCanvasMode === "replace") {
+          const deletedExisting = currentElements.map((el) => ({
+            ...el,
+            isDeleted: true,
+            version: (el.version || 1) + 1,
+            updated: Date.now(),
+          }))
+          finalSceneElements = [...deletedExisting, ...converted]
+        } else {
+          const cleanedExisting = currentElements.map((el) => {
+            const textVal = typeof (el as unknown as { text?: unknown }).text === "string"
+              ? (el as unknown as { text: string }).text
+              : ""
+            if (
+              el.id.startsWith("ai-generation-placeholder") ||
+              placeholderIdsRef.current.includes(el.id) ||
+              textVal.includes("Thinking through the structure") ||
+              textVal.includes("Synthesizing nodes")
+            ) {
+              return {
+                ...el,
+                isDeleted: true,
+                version: (el.version || 1) + 1,
+                updated: Date.now(),
+              }
+            }
+            return el
+          })
+          finalSceneElements = [...cleanedExisting, ...converted]
+        }
 
         excalidrawApi.updateScene({
-          elements: finalSceneElements,
+          elements: finalSceneElements as Parameters<typeof excalidrawApi.updateScene>[0]["elements"],
         })
 
         setTimeout(() => {
@@ -395,7 +418,7 @@ export default function AIFloatingSidebar({
         })
       }
     } catch (error) {
-      removeAiPlaceholder()
+      purgeStalePlaceholders()
       console.error(error)
       toast.add({
         type: "error",
@@ -574,6 +597,18 @@ export default function AIFloatingSidebar({
             Brainstorm
           </Button>
         </div>
+
+        {loading && (
+          <div className="glass-row relative rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-3.5 text-xs text-white/80 animate-in fade-in-0 duration-150">
+            <div className="flex items-center gap-2 font-semibold text-emerald-400">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Thinking through the structure...</span>
+            </div>
+            <p className="mt-1 text-[11px] text-white/60">
+              Synthesizing nodes, relationships & layout
+            </p>
+          </div>
+        )}
 
         {aiTextResult && (
           <div className="glass-row relative rounded-2xl border-white/12 p-3.5 text-xs text-white/70">

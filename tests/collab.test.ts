@@ -81,6 +81,18 @@ describe("sanitizeElements", () => {
     expect(sanitized).toHaveLength(1);
     expect(sanitized[0].version).toBe(1);
   });
+
+  it("filters out transient AI generation placeholder elements", () => {
+    const sanitized = sanitizeElements([
+      element({ id: "real-node-1" }),
+      element({ id: "ai-generation-placeholder-card" }),
+      element({ id: "ai-generation-placeholder-t1", text: "Thinking through the structure..." }),
+      element({ id: "card-2", text: "Thinking through the structure... extra text" }),
+    ]);
+
+    expect(sanitized).toHaveLength(1);
+    expect(sanitized[0].id).toBe("real-node-1");
+  });
 });
 
 describe("mergeSceneElements", () => {
