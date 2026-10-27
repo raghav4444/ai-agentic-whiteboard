@@ -399,15 +399,16 @@ function FloatingProperties({
             side="bottom"
             align="center"
             sideOffset={8}
-            className="z-[9999] w-[170px] rounded-xl border border-white/75 p-2 shadow-xl dark:border-white/10"
+            className="z-[9999] w-[200px] rounded-xl border border-white/75 p-2 shadow-xl dark:border-white/10"
           >
             <PropertyLabel>Stroke width</PropertyLabel>
 
-            <div className="mt-2 grid grid-cols-3 gap-1">
-              {[1, 2, 4].map((width) => (
+            <div className="mt-2 grid grid-cols-4 gap-1">
+              {[1, 2, 4, 7].map((width) => (
                 <button
                   key={width}
                   type="button"
+                  title={`${width}px`}
                   onClick={() =>
                     onPropertyChange?.("strokeWidth", width)
                   }
@@ -418,9 +419,9 @@ function FloatingProperties({
                   }`}
                 >
                   <span
-                    className="w-7 rounded-full bg-[#151714]"
+                    className="w-6 rounded-full bg-[#151714]"
                     style={{
-                      height: width,
+                      height: Math.min(width, 7),
                     }}
                   />
                 </button>

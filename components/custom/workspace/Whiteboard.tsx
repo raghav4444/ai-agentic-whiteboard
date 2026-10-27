@@ -36,6 +36,7 @@ import {
     Lock,
 } from "@/lib/icons";
 import FloatingProperties from "./FloatingProperties";
+import PencilToolbar from "./PencilToolbar";
 import { Button } from "@/components/ui/button"
 import AIFloatingSidebar from "./AIFloatingSidebar";
 import type { CollabSession } from "./useCollabSession";
@@ -233,6 +234,25 @@ async function pngToPdf(png: Blob): Promise<Blob> {
 function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
     const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
     const [activeTool, setActiveTool] = useState("Selection");
+    const [pencilColor, setPencilColor] = useState<string>(() => {
+        if (typeof window === "undefined") return "#151714";
+        try {
+            return localStorage.getItem("scribeboard:pencil-color") || "#151714";
+        } catch {
+            return "#151714";
+        }
+    });
+    const [pencilWidth, setPencilWidth] = useState<number>(() => {
+        if (typeof window === "undefined") return 2;
+        try {
+            const stored = localStorage.getItem("scribeboard:pencil-width");
+            const parsed = stored ? Number(stored) : NaN;
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : 2;
+        } catch {
+            return 2;
+        }
+    });
+    const [pencilToolbarOpen, setPencilToolbarOpen] = useState(true);
     const [selectedElement, setSelectedElement] = useState<ExcalidrawElement | null>(null);
     const [canvasState, setCanvasState] = useState<AppState | null>(null);
     const [showAISidebar, setShowAISidebar] = useState(false);
@@ -646,6 +666,9 @@ function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
             const mappedName = TOOL_NAME_MAP[currentTool];
             if (mappedName) {
                 setActiveTool(mappedName);
+                if (mappedName === "Draw") {
+                    setPencilToolbarOpen(true);
+                }
             }
         } else {
             activeToolRef.current = "selection";
@@ -848,9 +871,48 @@ function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
         };
     }, [projectId, session.clientId, session.identity?.name, session.shareToken]);
 
+    const updatePencilColor = (color: string) => {
+        setPencilColor(color);
+        try {
+            localStorage.setItem("scribeboard:pencil-color", color);
+        } catch {}
+        if (excalidrawAPI) {
+            excalidrawAPI.updateScene({
+                appState: { currentItemStrokeColor: color },
+            });
+            if (selectedElement && selectedElement.type === "freedraw") {
+                handlePropertyChange("strokeColor", color);
+            }
+        }
+    };
+
+    const updatePencilWidth = (width: number) => {
+        setPencilWidth(width);
+        try {
+            localStorage.setItem("scribeboard:pencil-width", String(width));
+        } catch {}
+        if (excalidrawAPI) {
+            excalidrawAPI.updateScene({
+                appState: { currentItemStrokeWidth: width },
+            });
+            if (selectedElement && selectedElement.type === "freedraw") {
+                handlePropertyChange("strokeWidth", width);
+            }
+        }
+    };
+
     const changeTool = (tool: string) => {
         if (!excalidrawAPI || readOnly) return;
         setActiveTool(tool);
+        if (tool === "Draw") {
+            setPencilToolbarOpen((prev) => (activeTool === "Draw" ? !prev : true));
+            excalidrawAPI.updateScene({
+                appState: {
+                    currentItemStrokeColor: pencilColor,
+                    currentItemStrokeWidth: pencilWidth,
+                },
+            });
+        }
         const excalType = tool === "Draw" ? "freedraw" : tool.toLowerCase();
         const shouldLock = excalType !== "selection" && excalType !== "hand";
         excalidrawAPI.setActiveTool({
@@ -1106,6 +1168,16 @@ function Whiteboard({ projectId, session, readOnly = false }: WhiteboardProps) {
                     );
                 })}
             </div>
+
+            {activeTool === "Draw" && pencilToolbarOpen && !railHidden && !readOnly && (
+                <PencilToolbar
+                    color={pencilColor}
+                    width={pencilWidth}
+                    onColorChange={updatePencilColor}
+                    onWidthChange={updatePencilWidth}
+                    onClose={() => setPencilToolbarOpen(false)}
+                />
+            )}
 
             {!readOnly && (
                 <FloatingProperties
