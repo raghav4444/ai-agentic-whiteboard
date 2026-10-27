@@ -1,13 +1,13 @@
 import { db, users } from "@/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const user = await currentUser();
     if (!user) {
-      return NextResponse.json({ message: "User Not Found" }, { status: 404 });
+      return NextResponse.json({ message: "User Not Found" }, { status: 401 });
     }
 
     const email = user.primaryEmailAddress?.emailAddress ?? "";
@@ -36,11 +36,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     const user = await currentUser();
     if (!user) {
-      return NextResponse.json({ message: "User Not Found" }, { status: 404 });
+      return NextResponse.json({ message: "User Not Found" }, { status: 401 });
     }
 
     const email = user.primaryEmailAddress?.emailAddress ?? "";

@@ -51,7 +51,7 @@ export function LandingNav({ active = 'home', showSound = false }: LandingNavPro
         >
           How it works
         </Link>
-        <a href="/#about">About</a>
+        <Link href="/#about">About</Link>
       </div>
       <div className="nav-actions">
         {showSound && (
